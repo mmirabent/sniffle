@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <netinet/in.h>
+#include <arpa/inet.h>
 
 void print_error(char* err);
 void print_pcap_err(pcap_t *p);
@@ -36,7 +37,8 @@ struct sniff_ip {
     u_char  ip_ttl;                 /* time to live */
     u_char  ip_p;                   /* protocol */
     u_short ip_sum;                 /* checksum */
-    struct  in_addr ip_src,ip_dst;  /* source and dest address */
+    struct  in_addr ip_src;         /* source and dest address */
+    struct  in_addr ip_dst;         
 };
 
 #define IP_HL(ip)               (((ip)->ip_vhl) & 0x0f)
@@ -141,6 +143,8 @@ void process_packet(u_char *user, const struct pcap_pkthdr *h, const u_char *pac
     size_tcp = TH_OFF(tcp)*4;
     if(size_tcp < 20) return; /* Invalid tcp header */
 
+    printf("%s:%d -> ", inet_ntoa(ip->ip_src), ntohs(tcp->th_sport)); 
+    printf("%s:%d\n",  inet_ntoa(ip->ip_dst), ntohs(tcp->th_dport));
     /* If SYN, add to syn table */
     /* If SYN-ACK, match with syn table entry, create delta, ship off for 
      * processing elsewhere(file IO for now). Then create entry in synack table*/
