@@ -11,6 +11,9 @@ void print_pcap_err(pcap_t *p);
 void process_packet(u_char *user, const struct pcap_pkthdr *h, const u_char *bytes);
 void add_to_syn(const struct sniff_ip* ip, const struct sniff_tcp* tcp, struct timeval ts);
 void add_to_ack(const struct sniff_ip* ip, const struct sniff_tcp* tcp, struct timeval ts);
+struct session_rec* build_session(const struct sniff_ip* ip, const struct sniff_tcp* tcp, struct timeval ts);
+struct session_rec* find_in_ack(const struct sniff_ip* ip, const struct sniff_tcp* tcp, struct timeval ts);
+struct session_rec* find_in_syn(const struct sniff_ip* ip, const struct sniff_tcp* tcp, struct timeval ts);
 
 #define ACK_TABLE_SIZE 100
 struct session_rec **ack_table;
@@ -110,6 +113,7 @@ void process_packet(u_char *user, const struct pcap_pkthdr *h, const u_char *pac
     if(tcp->th_flags == TH_SYN) {
         add_to_syn(ip, tcp, h->ts);
     } else if(tcp->th_flags == ( TH_SYN | TH_ACK )){
+        find_in_syn(ip, tcp, h->ts);
         add_to_ack(ip, tcp, h->ts);
     }
 
@@ -163,3 +167,35 @@ void print_error(char* err) {
 void print_pcap_err(pcap_t *p) {
     print_error(pcap_geterr(p));
 }
+
+struct session_rec* find_in_syn(const struct sniff_ip* ip, const struct sniff_tcp* tcp, struct timeval ts) {
+    struct session_rec* sess1 = build_session(ip, tcp, ts);
+    struct session_rec* sess2;
+    for(int i = 0; i < SYN_TABLE_SIZE; i++) {
+        sess2 = syn_table[i];
+        if(!sess2 && sess1->ip_src.s_addr == sess2->ip_dst.s_addr &&
+                     sess1->ip_dst.s_addr == sess2->ip_src.s_addr &&
+                     sess1->sport == sess2->dport &&
+                     sess1->dport == sess2->sport &&
+                     tcp->th_ack == sess2->seq+1) {
+            free(sess1);
+            return sess2;
+        }
+    }
+    free(sess1);
+    return NULL;
+}
+
+struct session_rec* build_session(const struct sniff_ip* ip, const struct sniff_tcp* tcp, struct timeval ts) {
+    struct session_rec *sess;
+    sess = malloc(sizeof(struct session_rec));
+    sess->sport = tcp->th_sport;
+    sess->dport = tcp->th_dport;
+    sess->ip_src = ip->ip_src;
+    sess->ip_dst = ip->ip_dst;
+    sess->seq = tcp->th_seq;
+    sess->ts = ts;
+    return sess;
+}
+
+
