@@ -4,6 +4,7 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include "decode.h"
+#include "session.h"
 
 void print_error(char* err);
 void print_pcap_err(pcap_t *p);
@@ -95,6 +96,17 @@ void process_packet(u_char *user, const struct pcap_pkthdr *h, const u_char *pac
     /* syn-ack table should have source ip, dest ip, source port, dest port, and syn-number */
     /* match by comparing ack-number+1 to syn number in table */
 
+}
+
+void add_to_syn(struct sniff_ip* ip, struct sniff_tcp* tcp, struct timeval ts) {
+    struct session_rec *sess;
+    sess = malloc(sizeof(struct session_rec));
+    sess->sport = tcp->th_sport;
+    sess->dport = tcp->th_dport;
+    sess->ip_src = ip->ip_src;
+    sess->ip_dst = ip->ip_dst;
+    sess->seq = tcp->th_seq;
+    sess->ts = ts;
 }
 
 void print_error(char* err) {
