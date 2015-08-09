@@ -9,6 +9,16 @@
 void print_error(char* err);
 void print_pcap_err(pcap_t *p);
 void process_packet(u_char *user, const struct pcap_pkthdr *h, const u_char *bytes);
+void add_to_syn(const struct sniff_ip* ip, const struct sniff_tcp* tcp, struct timeval ts);
+void add_to_ack(const struct sniff_ip* ip, const struct sniff_tcp* tcp, struct timeval ts);
+
+#define ACK_TABLE_SIZE 100
+struct session_rec **ack_table;
+u_int ack_table_idx;
+
+#define SYN_TABLE_SIZE 100
+struct session_rec **syn_table;
+u_int syn_table_idx;
 
 int main(int argc, char** argv) {
     /* Error buffer used by many pcap functions to return error messages */
@@ -17,6 +27,18 @@ int main(int argc, char** argv) {
     char *dev;
     int ret;
     struct bpf_program *filter;
+
+    ack_table = malloc(ACK_TABLE_SIZE * sizeof(struct session_rec*));
+    for(int i = 0; i < ACK_TABLE_SIZE; i++){
+        ack_table[i] = NULL;
+    }
+    ack_table_idx = 0;
+
+    syn_table = malloc(SYN_TABLE_SIZE * sizeof(struct session_rec*));
+    for(int i = 0; i < SYN_TABLE_SIZE; i++){
+        syn_table[i] = NULL;
+    }
+    syn_table_idx = 0;
 
     /* If no command line arguments given, lookup a device to open. Else use 
      * first argument */
@@ -85,8 +107,14 @@ void process_packet(u_char *user, const struct pcap_pkthdr *h, const u_char *pac
     size_tcp = TH_OFF(tcp)*4;
     if(size_tcp < 20) return; /* Invalid tcp header */
 
-    printf("%s:%d -> ", inet_ntoa(ip->ip_src), ntohs(tcp->th_sport)); 
-    printf("%s:%d\n",  inet_ntoa(ip->ip_dst), ntohs(tcp->th_dport));
+    if(tcp->th_flags == TH_SYN) {
+        add_to_syn(ip, tcp, h->ts);
+    } else if(tcp->th_flags == ( TH_SYN | TH_ACK )){
+        add_to_ack(ip, tcp, h->ts);
+    }
+
+    /* printf("%s:%d -> ", inet_ntoa(ip->ip_src), ntohs(tcp->th_sport)); 
+    printf("%s:%d\n",  inet_ntoa(ip->ip_dst), ntohs(tcp->th_dport)); */
     /* If SYN, add to syn table */
     /* If SYN-ACK, match with syn table entry, create delta, ship off for 
      * processing elsewhere(file IO for now). Then create entry in synack table*/
@@ -95,11 +123,12 @@ void process_packet(u_char *user, const struct pcap_pkthdr *h, const u_char *pac
     /* syn table should have source ip, dest ip, source port, dest port, and syn-number */
     /* syn-ack table should have source ip, dest ip, source port, dest port, and syn-number */
     /* match by comparing ack-number+1 to syn number in table */
-
 }
 
-void add_to_syn(struct sniff_ip* ip, struct sniff_tcp* tcp, struct timeval ts) {
+void add_to_ack(const struct sniff_ip* ip, const struct sniff_tcp* tcp, struct timeval ts) {
     struct session_rec *sess;
+    int i = ack_table_idx % ACK_TABLE_SIZE;
+    free(ack_table[i]);
     sess = malloc(sizeof(struct session_rec));
     sess->sport = tcp->th_sport;
     sess->dport = tcp->th_dport;
@@ -107,6 +136,23 @@ void add_to_syn(struct sniff_ip* ip, struct sniff_tcp* tcp, struct timeval ts) {
     sess->ip_dst = ip->ip_dst;
     sess->seq = tcp->th_seq;
     sess->ts = ts;
+    ack_table[i] = sess;
+    ack_table_idx++;
+}
+
+void add_to_syn(const struct sniff_ip* ip, const struct sniff_tcp* tcp, struct timeval ts) {
+    struct session_rec *sess;
+    int i = syn_table_idx % SYN_TABLE_SIZE;
+    free(syn_table[i]);
+    sess = malloc(sizeof(struct session_rec));
+    sess->sport = tcp->th_sport;
+    sess->dport = tcp->th_dport;
+    sess->ip_src = ip->ip_src;
+    sess->ip_dst = ip->ip_dst;
+    sess->seq = tcp->th_seq;
+    sess->ts = ts;
+    syn_table[i] = sess;
+    syn_table_idx++;
 }
 
 void print_error(char* err) {
