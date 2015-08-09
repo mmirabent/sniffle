@@ -113,7 +113,7 @@ void process_packet(u_char *user, const struct pcap_pkthdr *h, const u_char *pac
     if(tcp->th_flags == TH_SYN) {
         add_to_syn(ip, tcp, h->ts);
     } else if(tcp->th_flags == ( TH_SYN | TH_ACK )){
-        find_in_syn(ip, tcp, h->ts);
+        find_in_syn(ip, tcp, h->ts); 
         add_to_ack(ip, tcp, h->ts);
     }
 
@@ -157,6 +157,9 @@ void add_to_syn(const struct sniff_ip* ip, const struct sniff_tcp* tcp, struct t
     sess->ts = ts;
     syn_table[i] = sess;
     syn_table_idx++;
+
+    printf("SYN %s:%d -> ", inet_ntoa(ip->ip_src), ntohs(tcp->th_sport)); 
+    printf("%s:%d\n",  inet_ntoa(ip->ip_dst), ntohs(tcp->th_dport));
 }
 
 void print_error(char* err) {
@@ -169,19 +172,23 @@ void print_pcap_err(pcap_t *p) {
 }
 
 struct session_rec* find_in_syn(const struct sniff_ip* ip, const struct sniff_tcp* tcp, struct timeval ts) {
+    printf("SYN-ACK %s:%d -> ", inet_ntoa(ip->ip_src), ntohs(tcp->th_sport)); 
+    printf("%s:%d\n",  inet_ntoa(ip->ip_dst), ntohs(tcp->th_dport));
     struct session_rec* sess1 = build_session(ip, tcp, ts);
     struct session_rec* sess2;
     for(int i = 0; i < SYN_TABLE_SIZE; i++) {
         sess2 = syn_table[i];
-        if(!sess2 && sess1->ip_src.s_addr == sess2->ip_dst.s_addr &&
-                     sess1->ip_dst.s_addr == sess2->ip_src.s_addr &&
-                     sess1->sport == sess2->dport &&
-                     sess1->dport == sess2->sport &&
-                     tcp->th_ack == sess2->seq+1) {
+        if(sess2 && sess1 && 
+                sess1->ip_src.s_addr == sess2->ip_dst.s_addr && /* This is not how you compare IP addresses? */
+                sess1->ip_dst.s_addr == sess2->ip_src.s_addr &&
+                sess1->sport == sess2->sport &&
+                sess1->dport == sess2->dport) {
+            printf("Found match!\n");
             free(sess1);
             return sess2;
         }
     }
+    printf("Found no match.\n");
     free(sess1);
     return NULL;
 }
