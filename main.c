@@ -8,9 +8,6 @@ void print_error(char* err);
 void print_pcap_err(pcap_t *p);
 void process_packet(u_char *user, const struct pcap_pkthdr *h, const u_char *bytes);
 
-/* default snap length (maximum bytes per packet to capture) */
-#define SNAP_LEN 1518
-
 /* ethernet headers are always exactly 14 bytes [1] */
 #define SIZE_ETHERNET 14
 
@@ -117,7 +114,7 @@ char errbuf[PCAP_ERRBUF_SIZE];
         print_pcap_err(capture);
 
     /* Start reading packets */
-    ret = pcap_loop(capture, 0, process_packet, '\0');
+    ret = pcap_loop(capture, 0, process_packet, NULL);
     if(ret)
         print_pcap_err(capture);
 
