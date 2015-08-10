@@ -80,7 +80,7 @@ int main(int argc, char** argv) {
     if(ret)
         print_pcap_err(capture);
 
-    pcap_setfilter(capture, filter);
+    ret = pcap_setfilter(capture, filter);
     if(ret)
         print_pcap_err(capture);
 
@@ -184,7 +184,7 @@ void find_in_syn(const struct sniff_ip* ip, const struct sniff_tcp* tcp, struct 
                 sess1->sport == sess2->dport &&
                 sess1->dport == sess2->sport) {
             /* Match found */
-            delta = (sess1->ts.tv_usec - sess2->ts.tv_usec)/1000; /* Convert from usec to msec */
+            delta = (sess1->ts.tv_usec - sess2->ts.tv_usec)/1000; /* Convert from usec to msec  TODO: Write function to do this better*/
             report_server_rtt(sess2->ip_src, sess2->ip_dst, sess2->sport, sess2->dport, delta);
 
             free(sess1);
@@ -199,7 +199,6 @@ void find_in_syn(const struct sniff_ip* ip, const struct sniff_tcp* tcp, struct 
 void report_server_rtt(struct in_addr client, struct in_addr server, u_short sport, u_short dport, int rtt) {
     printf("%s:%d -> ", inet_ntoa(client), sport);
     printf("%s:%d %dms\n", inet_ntoa(server), dport, rtt);
-
 }
 
 struct session_rec* build_session(const struct sniff_ip* ip, const struct sniff_tcp* tcp, struct timeval ts) {
