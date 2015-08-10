@@ -11,9 +11,10 @@ void print_pcap_err(pcap_t *p);
 void process_packet(u_char *user, const struct pcap_pkthdr *h, const u_char *bytes);
 void add_to_syn(const struct sniff_ip* ip, const struct sniff_tcp* tcp, struct timeval ts);
 void add_to_ack(const struct sniff_ip* ip, const struct sniff_tcp* tcp, struct timeval ts);
+void report_server_rtt(struct in_addr client, struct in_addr server, u_short sport, u_short dport, int rtt);
 struct session_rec* build_session(const struct sniff_ip* ip, const struct sniff_tcp* tcp, struct timeval ts);
 struct session_rec* find_in_ack(const struct sniff_ip* ip, const struct sniff_tcp* tcp, struct timeval ts);
-struct session_rec* find_in_syn(const struct sniff_ip* ip, const struct sniff_tcp* tcp, struct timeval ts);
+void find_in_syn(const struct sniff_ip* ip, const struct sniff_tcp* tcp, struct timeval ts);
 
 #define ACK_TABLE_SIZE 100
 struct session_rec **ack_table;
@@ -158,8 +159,8 @@ void add_to_syn(const struct sniff_ip* ip, const struct sniff_tcp* tcp, struct t
     syn_table[i] = sess;
     syn_table_idx++;
 
-    printf("SYN %s:%d -> ", inet_ntoa(ip->ip_src), ntohs(tcp->th_sport)); 
-    printf("%s:%d\n",  inet_ntoa(ip->ip_dst), ntohs(tcp->th_dport));
+    /* printf("SYN %s:%d -> ", inet_ntoa(ip->ip_src), ntohs(tcp->th_sport)); 
+    printf("%s:%d\n",  inet_ntoa(ip->ip_dst), ntohs(tcp->th_dport)); */
 }
 
 void print_error(char* err) {
@@ -171,26 +172,34 @@ void print_pcap_err(pcap_t *p) {
     print_error(pcap_geterr(p));
 }
 
-struct session_rec* find_in_syn(const struct sniff_ip* ip, const struct sniff_tcp* tcp, struct timeval ts) {
-    printf("SYN-ACK %s:%d -> ", inet_ntoa(ip->ip_src), ntohs(tcp->th_sport)); 
-    printf("%s:%d\n",  inet_ntoa(ip->ip_dst), ntohs(tcp->th_dport));
+void find_in_syn(const struct sniff_ip* ip, const struct sniff_tcp* tcp, struct timeval ts) {
     struct session_rec* sess1 = build_session(ip, tcp, ts);
     struct session_rec* sess2;
+    int delta;
     for(int i = 0; i < SYN_TABLE_SIZE; i++) {
         sess2 = syn_table[i];
         if(sess2 && sess1 && 
-                sess1->ip_src.s_addr == sess2->ip_dst.s_addr && /* This is not how you compare IP addresses? */
+                sess1->ip_src.s_addr == sess2->ip_dst.s_addr && 
                 sess1->ip_dst.s_addr == sess2->ip_src.s_addr &&
-                sess1->sport == sess2->sport &&
-                sess1->dport == sess2->dport) {
-            printf("Found match!\n");
+                sess1->sport == sess2->dport &&
+                sess1->dport == sess2->sport) {
+            /* Match found */
+            delta = (sess1->ts.tv_usec - sess2->ts.tv_usec)/1000; /* Convert from usec to msec */
+            report_server_rtt(sess2->ip_src, sess2->ip_dst, sess2->sport, sess2->dport, delta);
+
             free(sess1);
-            return sess2;
+            free(sess2);
+            syn_table[i] = NULL;
+            return;
         }
     }
-    printf("Found no match.\n");
     free(sess1);
-    return NULL;
+}
+
+void report_server_rtt(struct in_addr client, struct in_addr server, u_short sport, u_short dport, int rtt) {
+    printf("%s:%d -> ", inet_ntoa(client), sport);
+    printf("%s:%d %dms\n", inet_ntoa(server), dport, rtt);
+
 }
 
 struct session_rec* build_session(const struct sniff_ip* ip, const struct sniff_tcp* tcp, struct timeval ts) {
