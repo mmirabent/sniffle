@@ -215,9 +215,9 @@ void find_in_syn(const struct sniff_ip* ip, const struct sniff_tcp* tcp, struct 
 }
 
 int calc_delta(long int sec1, long int usec1, long int sec2, long int usec2){
-  int delta_sec = sec2 - sec1;
-  int delta_msec = (usec2 - usec1)/1000;
-  return ((delta_sec)*1000 + delta_msec);
+    int delta_sec = (sec2 - sec1)*1000;
+    int delta_msec = (usec2 - usec1)/1000;
+    return (delta_sec + delta_msec);
 }
 
 /* 
