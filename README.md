@@ -12,3 +12,4 @@ Passive network health monitoring
 * Output options
 * Write more TODOs
 * Figure out an appropriate license
+* Basic usage documentation
