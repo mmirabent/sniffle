@@ -198,7 +198,8 @@ void find_in_syn(const struct sniff_ip* ip, const struct sniff_tcp* tcp, struct 
                 sess2->sport == sess1->dport &&
                 sess2->dport == sess1->sport) {
             /* Match found, calculate delta */
-            delta = (sess2->ts.tv_usec - sess1->ts.tv_usec)/1000; /* Convert from usec to msec  TODO: Write function to do this better*/
+           /*  delta = (sess2->ts.tv_usec - sess1->ts.tv_usec)/1000; */
+               delta = calc_delta(sess2->ts.tv_sec, sess2->ts.tv_usec, sess1->ts.tv_sec, sess1->ts.tv_usec);
             report_server_rtt(sess1->ip_src, sess1->ip_dst, sess1->sport, sess1->dport, delta);
 
             /* Free the memory allocated and clear the space in the array to 
@@ -210,6 +211,12 @@ void find_in_syn(const struct sniff_ip* ip, const struct sniff_tcp* tcp, struct 
         }
     }
     free(sess2);
+}
+
+int calc_delta(long int sec1, long int usec1, long int sec2, long int usec2){
+  int delta_sec = sec2 - sec1;
+  int delta_msec = (usec2 - usec1)/1000;
+  return ((delta_sec)*1000 + delta_msec);
 }
 
 /* 
