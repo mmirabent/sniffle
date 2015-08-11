@@ -15,6 +15,7 @@ void report_server_rtt(struct in_addr client, struct in_addr server, u_short spo
 struct session_rec* build_session(const struct sniff_ip* ip, const struct sniff_tcp* tcp, struct timeval ts);
 struct session_rec* find_in_ack(const struct sniff_ip* ip, const struct sniff_tcp* tcp, struct timeval ts);
 void find_in_syn(const struct sniff_ip* ip, const struct sniff_tcp* tcp, struct timeval ts);
+int calc_delta(long int sec1, long int usec1, long int sec2, long int usec2);
 
 #define ACK_TABLE_SIZE 100
 struct session_rec **ack_table;
