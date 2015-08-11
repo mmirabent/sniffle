@@ -124,9 +124,9 @@ void process_packet(u_char *user, const struct pcap_pkthdr *h, const u_char *pac
     if(tcp->th_flags == TH_SYN) {   /* If the packet has the SYN flag set */
         add_to_syn(ip, tcp, h->ts); 
     } else if(tcp->th_flags == ( TH_SYN | TH_ACK )){ /* If the packet has the SYN and ACK flag set */
-        find_in_syn(ip, tcp, h->ts); 
+        find_in_syn(ip, tcp, h->ts);
         add_to_ack(ip, tcp, h->ts);
-    }
+    } /* TODO: Add ack packet section */
 }
 
 /*
