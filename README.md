@@ -12,3 +12,9 @@ Passive network health monitoring
 * Output options
 * Write more TODOs
 * Figure out an appropriate license
+* Basic usage documentation
+
+## Usage
+
+Compile with `make`. Run with sudo, open up your browser and generate
+some traffic.
