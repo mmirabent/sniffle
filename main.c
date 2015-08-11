@@ -92,115 +92,140 @@ int main(int argc, char** argv) {
     return 0;
 }
 
+/*
+ * This is the callback function used by pcal_loop to process packets. Packets
+ * appear as byte arrays, here called 'packet' that are at most 'snap_len' long.
+ * The actual length is stored in the pcap_pkthdr struct 'h'. We don't really
+ * care becasue all we're interested in is the TCP and IP headers. The pragma
+ * below is used to suppress warnings about the user pointer not being used.
+ * The user pointer would allow pcap_loop to pass a pointer to the callback
+ * function, but for our purposes it's uneccessary.
+ */
 #pragma GCC diagnostic ignored "-Wunused-parameter"
 void process_packet(u_char *user, const struct pcap_pkthdr *h, const u_char *packet) {
-    /* declare the ip and tcp structs that will allow us easy access to the data
-     * later */
+    /* declare the ip and tcp structs that will allow us to easily access the
+     * data later */
     const struct sniff_ip *ip;
     const struct sniff_tcp *tcp;
     int size_ip;
     int size_tcp;
 
-    /* By asigning the correct memory address to the ip and tcp structs, we can
+    /* By casting the correct memory address to the ip and tcp structs, we can
      * use the structs to get at the important information in the packet headers */
     ip = (struct sniff_ip*)(packet + SIZE_ETHERNET);
     size_ip = IP_HL(ip)*4;
-    if(size_ip < 20) return; /* Invalid IP header */
+    if(size_ip < 20) return; /* Invalid IP header, die*/
 
     tcp = (struct sniff_tcp*)(packet + SIZE_ETHERNET + size_ip);
     size_tcp = TH_OFF(tcp)*4;
-    if(size_tcp < 20) return; /* Invalid tcp header */
+    if(size_tcp < 20) return; /* Invalid TCP header, die*/
 
-    if(tcp->th_flags == TH_SYN) {
-        add_to_syn(ip, tcp, h->ts);
-    } else if(tcp->th_flags == ( TH_SYN | TH_ACK )){
+    /* This is where the magic starts */
+    if(tcp->th_flags == TH_SYN) {   /* If the packet has the SYN flag set */
+        add_to_syn(ip, tcp, h->ts); 
+    } else if(tcp->th_flags == ( TH_SYN | TH_ACK )){ /* If the packet has the SYN and ACK flag set */
         find_in_syn(ip, tcp, h->ts); 
         add_to_ack(ip, tcp, h->ts);
     }
-
-    /* printf("%s:%d -> ", inet_ntoa(ip->ip_src), ntohs(tcp->th_sport)); 
-    printf("%s:%d\n",  inet_ntoa(ip->ip_dst), ntohs(tcp->th_dport)); */
-    /* If SYN, add to syn table */
-    /* If SYN-ACK, match with syn table entry, create delta, ship off for 
-     * processing elsewhere(file IO for now). Then create entry in synack table*/
-    /* If ACK, attempt to match with synack table entry, create delta, ship off for processing */
-
-    /* syn table should have source ip, dest ip, source port, dest port, and syn-number */
-    /* syn-ack table should have source ip, dest ip, source port, dest port, and syn-number */
-    /* match by comparing ack-number+1 to syn number in table */
 }
 
+/*
+ * This function allocated a new session_rec struct and then adds it to the
+ * ack table. The ack_table_idx keeps track of position, and the modulo
+ * operator is used to make sure that when the ack_table_idx reaches
+ * ACK_TABLE_SIZE, the index wraps around to 0
+ */
 void add_to_ack(const struct sniff_ip* ip, const struct sniff_tcp* tcp, struct timeval ts) {
-    struct session_rec *sess;
+    struct session_rec *sess = build_session(ip, tcp, ts);
     int i = ack_table_idx % ACK_TABLE_SIZE;
+
     free(ack_table[i]);
-    sess = malloc(sizeof(struct session_rec));
-    sess->sport = tcp->th_sport;
-    sess->dport = tcp->th_dport;
-    sess->ip_src = ip->ip_src;
-    sess->ip_dst = ip->ip_dst;
-    sess->seq = tcp->th_seq;
-    sess->ts = ts;
     ack_table[i] = sess;
     ack_table_idx++;
 }
 
+/*
+ * This function allocated a new session_rec struct and then adds it to the
+ * syn table. The syn_table_idx keeps track of position, and the modulo
+ * operator is used to make sure that when the syn_table_idx reaches
+ * SYN_TABLE_SIZE, the index wraps around to 0
+ */
 void add_to_syn(const struct sniff_ip* ip, const struct sniff_tcp* tcp, struct timeval ts) {
-    struct session_rec *sess;
+    struct session_rec *sess = build_session(ip, tcp, ts);
     int i = syn_table_idx % SYN_TABLE_SIZE;
+
     free(syn_table[i]);
-    sess = malloc(sizeof(struct session_rec));
-    sess->sport = tcp->th_sport;
-    sess->dport = tcp->th_dport;
-    sess->ip_src = ip->ip_src;
-    sess->ip_dst = ip->ip_dst;
-    sess->seq = tcp->th_seq;
-    sess->ts = ts;
     syn_table[i] = sess;
     syn_table_idx++;
-
-    /* printf("SYN %s:%d -> ", inet_ntoa(ip->ip_src), ntohs(tcp->th_sport)); 
-    printf("%s:%d\n",  inet_ntoa(ip->ip_dst), ntohs(tcp->th_dport)); */
 }
 
+/*
+ * Prints error messages and dies
+ */
 void print_error(char* err) {
     fprintf(stderr, "An error has occurred: %s\n", err);
     exit(1);
 }
 
+/*
+ * Prints pcap specific error messages and dies
+ */
 void print_pcap_err(pcap_t *p) {
     print_error(pcap_geterr(p));
 }
 
+/*
+ * This function looks for a matching SYN packet in the syn table. It takes the
+ * sniff_ip and sniff_tcp structs of a SYN-ACK packet. If it finds a matching
+ * SYN packet, it will call the report_server_rtt function and remove the 
+ * matched SYN packet from the syn table.
+ */
 void find_in_syn(const struct sniff_ip* ip, const struct sniff_tcp* tcp, struct timeval ts) {
-    struct session_rec* sess1 = build_session(ip, tcp, ts);
-    struct session_rec* sess2;
+    /* Build a session record from the supplied ip, tcp and ts structs.
+     * Strictly speaking, this isn't necessary, but it makes the code below
+     * neater and more straightforward to read */
+    struct session_rec* sess2 = build_session(ip, tcp, ts);
+    struct session_rec* sess1;
     int delta;
-    for(int i = 0; i < SYN_TABLE_SIZE; i++) {
-        sess2 = syn_table[i];
-        if(sess2 && sess1 && 
-                sess1->ip_src.s_addr == sess2->ip_dst.s_addr && 
-                sess1->ip_dst.s_addr == sess2->ip_src.s_addr &&
-                sess1->sport == sess2->dport &&
-                sess1->dport == sess2->sport) {
-            /* Match found */
-            delta = (sess1->ts.tv_usec - sess2->ts.tv_usec)/1000; /* Convert from usec to msec  TODO: Write function to do this better*/
-            report_server_rtt(sess2->ip_src, sess2->ip_dst, sess2->sport, sess2->dport, delta);
 
-            free(sess1);
+    for(int i = 0; i < SYN_TABLE_SIZE; i++) {
+        sess1 = syn_table[i];
+        /* Check that both structs are non-NULL and then match source ip to
+         * destination ip and source port to destination port */
+        if(sess1 && sess2 && 
+                sess2->ip_src.s_addr == sess1->ip_dst.s_addr && 
+                sess2->ip_dst.s_addr == sess1->ip_src.s_addr &&
+                sess2->sport == sess1->dport &&
+                sess2->dport == sess1->sport) {
+            /* Match found, calculate delta */
+            delta = (sess2->ts.tv_usec - sess1->ts.tv_usec)/1000; /* Convert from usec to msec  TODO: Write function to do this better*/
+            report_server_rtt(sess1->ip_src, sess1->ip_dst, sess1->sport, sess1->dport, delta);
+
+            /* Free the memory allocated and clear the space in the array to 
+             * prevent double freeing memory later */
             free(sess2);
+            free(sess1);
             syn_table[i] = NULL;
             return;
         }
     }
-    free(sess1);
+    free(sess2);
 }
 
+/* 
+ * At this point, this function just prints to stdout. However, this could be
+ * changed to print to a file.
+ */
 void report_server_rtt(struct in_addr client, struct in_addr server, u_short sport, u_short dport, int rtt) {
     printf("%s:%d -> ", inet_ntoa(client), sport);
     printf("%s:%d %dms\n", inet_ntoa(server), dport, rtt);
 }
 
+/*
+ * Convinience function for creating a session_rec from the sniff_ip, sniff_tcp
+ * and timeval structs. It allocated memory, so be sure to free the struct
+ * returned, lest ye be haunted by memory leaks!
+ */
 struct session_rec* build_session(const struct sniff_ip* ip, const struct sniff_tcp* tcp, struct timeval ts) {
     struct session_rec *sess;
     sess = malloc(sizeof(struct session_rec));
