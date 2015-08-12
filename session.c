@@ -20,6 +20,13 @@ struct session_rec* build_session(const struct sniff_ip* ip, const struct sniff_
     return sess;
 }
 
+/* Calcualte the delta in ms between ts1 and ts2. */
+int calc_delta(struct timeval ts1, struct timeval ts2) {
+    int delta_sec = (ts2.tv_sec - ts1.tv_sec)*1000;
+    int delta_msec = (ts2.tv_usec - ts1.tv_usec)/1000;
+    return (delta_sec + delta_msec);
+}
+
 /*
  * This function allocated a new session_rec struct and then adds it to the
  * syn table. The syn_table_idx keeps track of position, and the modulo
@@ -33,6 +40,21 @@ void add_to_syn(const struct sniff_ip* ip, const struct sniff_tcp* tcp, struct t
     free(syn_table[i]);
     syn_table[i] = sess;
     syn_table_idx++;
+}
+
+/*
+ * This function allocated a new session_rec struct and then adds it to the
+ * ack table. The ack_table_idx keeps track of position, and the modulo
+ * operator is used to make sure that when the ack_table_idx reaches
+ * ACK_TABLE_SIZE, the index wraps around to 0
+ */
+void add_to_ack(const struct sniff_ip* ip, const struct sniff_tcp* tcp, struct timeval ts) {
+    struct session_rec *sess = build_session(ip, tcp, ts);
+    int i = ack_table_idx % ACK_TABLE_SIZE;
+
+    free(ack_table[i]);
+    ack_table[i] = sess;
+    ack_table_idx++;
 }
 
 /*
@@ -74,23 +96,3 @@ void find_in_syn(const struct sniff_ip* ip, const struct sniff_tcp* tcp, struct 
     free(sess2);
 }
 
-int calc_delta(struct timeval ts1, struct timeval ts2) {
-    int delta_sec = (ts2.tv_sec - ts1.tv_sec)*1000;
-    int delta_msec = (ts2.tv_usec - ts1.tv_usec)/1000;
-    return (delta_sec + delta_msec);
-}
-
-/*
- * This function allocated a new session_rec struct and then adds it to the
- * ack table. The ack_table_idx keeps track of position, and the modulo
- * operator is used to make sure that when the ack_table_idx reaches
- * ACK_TABLE_SIZE, the index wraps around to 0
- */
-void add_to_ack(const struct sniff_ip* ip, const struct sniff_tcp* tcp, struct timeval ts) {
-    struct session_rec *sess = build_session(ip, tcp, ts);
-    int i = ack_table_idx % ACK_TABLE_SIZE;
-
-    free(ack_table[i]);
-    ack_table[i] = sess;
-    ack_table_idx++;
-}
