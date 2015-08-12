@@ -12,7 +12,6 @@ void process_packet(u_char *user, const struct pcap_pkthdr *h, const u_char *byt
 void add_to_syn(const struct sniff_ip* ip, const struct sniff_tcp* tcp, struct timeval ts);
 void add_to_ack(const struct sniff_ip* ip, const struct sniff_tcp* tcp, struct timeval ts);
 void report_server_rtt(struct in_addr client, struct in_addr server, u_short sport, u_short dport, int rtt);
-struct session_rec* build_session(const struct sniff_ip* ip, const struct sniff_tcp* tcp, struct timeval ts);
 struct session_rec* find_in_ack(const struct sniff_ip* ip, const struct sniff_tcp* tcp, struct timeval ts);
 void find_in_syn(const struct sniff_ip* ip, const struct sniff_tcp* tcp, struct timeval ts);
 int calc_delta(struct timeval ts1, struct timeval ts2);
@@ -228,22 +227,3 @@ void report_server_rtt(struct in_addr client, struct in_addr server, u_short spo
     printf("%s:%d -> ", inet_ntoa(client), sport);
     printf("%s:%d %dms\n", inet_ntoa(server), dport, rtt);
 }
-
-/*
- * Convinience function for creating a session_rec from the sniff_ip, sniff_tcp
- * and timeval structs. It allocated memory, so be sure to free the struct
- * returned, lest ye be haunted by memory leaks!
- */
-struct session_rec* build_session(const struct sniff_ip* ip, const struct sniff_tcp* tcp, struct timeval ts) {
-    struct session_rec *sess;
-    sess = malloc(sizeof(struct session_rec));
-    sess->sport = tcp->th_sport;
-    sess->dport = tcp->th_dport;
-    sess->ip_src = ip->ip_src;
-    sess->ip_dst = ip->ip_dst;
-    sess->seq = tcp->th_seq;
-    sess->ts = ts;
-    return sess;
-}
-
-

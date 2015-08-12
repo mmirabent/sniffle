@@ -1,6 +1,9 @@
 #ifndef __PCM_DECODE_H
 #define __PCM_DECODE_H
 
+#include <pcap/pcap.h>
+#include <netinet/in.h>
+
 /* ethernet headers are always exactly 14 bytes [1] */
 #define SIZE_ETHERNET 14
 

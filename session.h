@@ -1,6 +1,8 @@
 #ifndef __PCM_SESSION_H
 #define __PCM_SESSION_H
 
+#include "decode.h"
+
 struct session_rec {
     struct  in_addr ip_src;         /* source and dest address */
     struct  in_addr ip_dst;
@@ -9,4 +11,7 @@ struct session_rec {
     u_short dport;   /* Source port */
     struct  timeval ts;
 };
+
+struct session_rec* build_session(const struct sniff_ip* ip, const struct sniff_tcp* tcp, struct timeval ts);
+
 #endif
