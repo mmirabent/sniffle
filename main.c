@@ -9,20 +9,6 @@
 void print_error(char* err);
 void print_pcap_err(pcap_t *p);
 void process_packet(u_char *user, const struct pcap_pkthdr *h, const u_char *bytes);
-void add_to_syn(const struct sniff_ip* ip, const struct sniff_tcp* tcp, struct timeval ts);
-void add_to_ack(const struct sniff_ip* ip, const struct sniff_tcp* tcp, struct timeval ts);
-void report_server_rtt(struct in_addr client, struct in_addr server, u_short sport, u_short dport, int rtt);
-struct session_rec* find_in_ack(const struct sniff_ip* ip, const struct sniff_tcp* tcp, struct timeval ts);
-void find_in_syn(const struct sniff_ip* ip, const struct sniff_tcp* tcp, struct timeval ts);
-int calc_delta(struct timeval ts1, struct timeval ts2);
-
-#define ACK_TABLE_SIZE 100
-struct session_rec **ack_table;
-u_int ack_table_idx;
-
-#define SYN_TABLE_SIZE 100
-struct session_rec **syn_table;
-u_int syn_table_idx;
 
 int main(int argc, char** argv) {
     /* Error buffer used by many pcap functions to return error messages */
@@ -130,36 +116,6 @@ void process_packet(u_char *user, const struct pcap_pkthdr *h, const u_char *pac
 }
 
 /*
- * This function allocated a new session_rec struct and then adds it to the
- * ack table. The ack_table_idx keeps track of position, and the modulo
- * operator is used to make sure that when the ack_table_idx reaches
- * ACK_TABLE_SIZE, the index wraps around to 0
- */
-void add_to_ack(const struct sniff_ip* ip, const struct sniff_tcp* tcp, struct timeval ts) {
-    struct session_rec *sess = build_session(ip, tcp, ts);
-    int i = ack_table_idx % ACK_TABLE_SIZE;
-
-    free(ack_table[i]);
-    ack_table[i] = sess;
-    ack_table_idx++;
-}
-
-/*
- * This function allocated a new session_rec struct and then adds it to the
- * syn table. The syn_table_idx keeps track of position, and the modulo
- * operator is used to make sure that when the syn_table_idx reaches
- * SYN_TABLE_SIZE, the index wraps around to 0
- */
-void add_to_syn(const struct sniff_ip* ip, const struct sniff_tcp* tcp, struct timeval ts) {
-    struct session_rec *sess = build_session(ip, tcp, ts);
-    int i = syn_table_idx % SYN_TABLE_SIZE;
-
-    free(syn_table[i]);
-    syn_table[i] = sess;
-    syn_table_idx++;
-}
-
-/*
  * Prints error messages and dies
  */
 void print_error(char* err) {
@@ -174,56 +130,4 @@ void print_pcap_err(pcap_t *p) {
     print_error(pcap_geterr(p));
 }
 
-/*
- * This function looks for a matching SYN packet in the syn table. It takes the
- * sniff_ip and sniff_tcp structs of a SYN-ACK packet. If it finds a matching
- * SYN packet, it will call the report_server_rtt function and remove the 
- * matched SYN packet from the syn table.
- */
-void find_in_syn(const struct sniff_ip* ip, const struct sniff_tcp* tcp, struct timeval ts) {
-    /* Build a session record from the supplied ip, tcp and ts structs.
-     * Strictly speaking, this isn't necessary, but it makes the code below
-     * neater and more straightforward to read */
-    struct session_rec* sess2 = build_session(ip, tcp, ts);
-    struct session_rec* sess1;
-    int delta;
 
-    for(int i = 0; i < SYN_TABLE_SIZE; i++) {
-        sess1 = syn_table[i];
-        /* Check that both structs are non-NULL and then match source ip to
-         * destination ip and source port to destination port */
-        if(sess1 && sess2 && 
-                sess2->ip_src.s_addr == sess1->ip_dst.s_addr && 
-                sess2->ip_dst.s_addr == sess1->ip_src.s_addr &&
-                sess2->sport == sess1->dport &&
-                sess2->dport == sess1->sport) {
-            /* Match found, calculate delta */
-           /*  delta = (sess2->ts.tv_usec - sess1->ts.tv_usec)/1000; */
-               delta = calc_delta(sess1->ts, sess2->ts);
-            report_server_rtt(sess1->ip_src, sess1->ip_dst, sess1->sport, sess1->dport, delta);
-
-            /* Free the memory allocated and clear the space in the array to 
-             * prevent double freeing memory later */
-            free(sess2);
-            free(sess1);
-            syn_table[i] = NULL;
-            return;
-        }
-    }
-    free(sess2);
-}
-
-int calc_delta(struct timeval ts1, struct timeval ts2) {
-    int delta_sec = (ts2.tv_sec - ts1.tv_sec)*1000;
-    int delta_msec = (ts2.tv_usec - ts1.tv_usec)/1000;
-    return (delta_sec + delta_msec);
-}
-
-/* 
- * At this point, this function just prints to stdout. However, this could be
- * changed to print to a file.
- */
-void report_server_rtt(struct in_addr client, struct in_addr server, u_short sport, u_short dport, int rtt) {
-    printf("%s:%d -> ", inet_ntoa(client), sport);
-    printf("%s:%d %dms\n", inet_ntoa(server), dport, rtt);
-}
