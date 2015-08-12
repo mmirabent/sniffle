@@ -15,7 +15,7 @@ void report_server_rtt(struct in_addr client, struct in_addr server, u_short spo
 struct session_rec* build_session(const struct sniff_ip* ip, const struct sniff_tcp* tcp, struct timeval ts);
 struct session_rec* find_in_ack(const struct sniff_ip* ip, const struct sniff_tcp* tcp, struct timeval ts);
 void find_in_syn(const struct sniff_ip* ip, const struct sniff_tcp* tcp, struct timeval ts);
-int calc_delta(long int sec1, long int usec1, long int sec2, long int usec2);
+int calc_delta(struct timeval ts1, struct timeval ts2);
 
 #define ACK_TABLE_SIZE 100
 struct session_rec **ack_table;
@@ -200,7 +200,7 @@ void find_in_syn(const struct sniff_ip* ip, const struct sniff_tcp* tcp, struct 
                 sess2->dport == sess1->sport) {
             /* Match found, calculate delta */
            /*  delta = (sess2->ts.tv_usec - sess1->ts.tv_usec)/1000; */
-               delta = calc_delta(sess2->ts.tv_sec, sess2->ts.tv_usec, sess1->ts.tv_sec, sess1->ts.tv_usec);
+               delta = calc_delta(sess1->ts, sess2->ts);
             report_server_rtt(sess1->ip_src, sess1->ip_dst, sess1->sport, sess1->dport, delta);
 
             /* Free the memory allocated and clear the space in the array to 
@@ -214,9 +214,9 @@ void find_in_syn(const struct sniff_ip* ip, const struct sniff_tcp* tcp, struct 
     free(sess2);
 }
 
-int calc_delta(long int sec1, long int usec1, long int sec2, long int usec2){
-    int delta_sec = (sec1 - sec2)*1000;
-    int delta_msec = (usec1 - usec2)/1000;
+int calc_delta(struct timeval ts1, struct timeval ts2) {
+    int delta_sec = (ts2.tv_sec - ts1.tv_sec)*1000;
+    int delta_msec = (ts2.tv_usec - ts1.tv_usec)/1000;
     return (delta_sec + delta_msec);
 }
 
