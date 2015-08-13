@@ -17,7 +17,7 @@ Passive network health monitoring
 * Command Line Options
     * Output options
         * CSV output
-     * Input options (live or .pcap file)
+    * Input options (live or .pcap file)
         * live capture
         * .pcap file
 * Flags
