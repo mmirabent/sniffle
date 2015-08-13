@@ -3,6 +3,14 @@
 
 #include <stdlib.h>
 
+void init_ack() {
+    ack_table = malloc(ACK_TABLE_SIZE * sizeof(struct session_rec*));
+    for(int i = 0; i < ACK_TABLE_SIZE; i++){
+        ack_table[i] = NULL;
+    }
+    ack_table_idx = 0;
+}
+
 /*
  * Convinience function for creating a session_rec from the sniff_ip, sniff_tcp
  * and timeval structs. It allocated memory, so be sure to free the struct
