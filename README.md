@@ -13,6 +13,9 @@ Passive network health monitoring
 * Write more TODOs
 * Figure out an appropriate license
 * Basic usage documentation
+* Command Line Options
+    * Output options
+    * Input options (live or .pcap file)
 
 ## Usage
 

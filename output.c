@@ -24,8 +24,8 @@ void report_server_rtt(struct in_addr client, struct in_addr server, u_short spo
     reverse_dns_lookup(inet_ntoa(server), server_buf);
     printf("%s:%d -> ", inet_ntoa(client), sport);
     printf("%s:%d %dms\n", inet_ntoa(server), dport, rtt);
-    printf("%s -> ", client_buf);
-    printf("%s\n", server_buf);
+ /*   printf("%s -> ", client_buf);
+    printf("%s\n", server_buf); */
 }
 
 void reverse_dns_lookup(char * ip_addr, char * buffer){
