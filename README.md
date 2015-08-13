@@ -10,13 +10,15 @@ Passive network health monitoring
 * ~~DNS reverse lookups~~
     * switch from dig to syscall implementation
 * Data visualization? Maybe?
-* Output options
 * ~~Write more TODOs~~
 * Figure out an appropriate license
 * Basic usage documentation
 * Command Line Options
     * Output options
+      * CSV output
     * Input options (live or .pcap file)
+      * live capture
+      * .pcap file
 
 ## Usage
 
