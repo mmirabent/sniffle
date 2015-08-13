@@ -8,6 +8,7 @@ Passive network health monitoring
 * Write a better README
 * Add command line arguments
 * DNS reverse lookups
+    * switch from dig to syscall implementation
 * Data visualization? Maybe?
 * Output options
 * Write more TODOs
