@@ -20,13 +20,17 @@ Passive network health monitoring
     * Input options (live or .pcap file)
         * live capture
         * .pcap file
-* Flags
-    * -n reverse DNS lookup
-    * -l live capture
-    * -f pcap file capture
-    * -o csv file output
-    * -s number of half open connections tracked
-    * -h help
+
+## Tentative flags
+
+| short 	| long          	| description                              	|
+|-------	|---------------	|------------------------------------------	|
+| -n    	| --reverse-dns 	| output hostnames instead of IP addresses 	|
+| -l    	| --live        	| use live network traffic for capture     	|
+| -f    	| --file-input  	| use pcap file capture                    	|
+| -o    	| --csv-output  	| output to csv file                       	|
+| -s    	| --size        	| number of half open connections tracked  	|
+| -h    	| --help        	| help I need somebody                     	|  
 
 ## Usage
 
