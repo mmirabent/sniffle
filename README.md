@@ -20,6 +20,14 @@ Passive network health monitoring
       * live capture
       * .pcap file
 
+* Flags
+    * -n reverse DNS lookup
+    * -l live capture
+    * -f pcap file capture
+    * -o csv file output
+    * -s number of half open connections tracked
+    * -h help
+
 ## Usage
 
 Compile with `make`. Run with sudo, open up your browser and generate
