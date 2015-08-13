@@ -18,11 +18,12 @@ int main(int argc, char** argv) {
     int ret;
     struct bpf_program *filter;
 
-    ack_table = malloc(ACK_TABLE_SIZE * sizeof(struct session_rec*));
+    /* ack_table = malloc(ACK_TABLE_SIZE * sizeof(struct session_rec*));
     for(int i = 0; i < ACK_TABLE_SIZE; i++){
         ack_table[i] = NULL;
     }
-    ack_table_idx = 0;
+    ack_table_idx = 0; */
+    init_ack();
 
     syn_table = malloc(SYN_TABLE_SIZE * sizeof(struct session_rec*));
     for(int i = 0; i < SYN_TABLE_SIZE; i++){

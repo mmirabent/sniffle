@@ -4,6 +4,7 @@ Passive network health monitoring
 
 ## TODO
 
+* Check for root early. Die if not
 * ~~timeval difference in milliseconds function~~
 * ~~Write a better README~~
 * Add command line arguments
