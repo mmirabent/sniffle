@@ -23,7 +23,7 @@ Passive network health monitoring
 
 ## Tentative flags
 
-| short 	| long          	| description                              	|
+| Short 	| Long          	| Description                              	|
 |-------	|---------------	|------------------------------------------	|
 | -n    	| --reverse-dns 	| output hostnames instead of IP addresses 	|
 | -l    	| --live        	| use live network traffic for capture     	|
