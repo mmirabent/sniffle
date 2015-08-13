@@ -16,11 +16,10 @@ Passive network health monitoring
 * Basic usage documentation
 * Command Line Options
     * Output options
-      * CSV output
-    * Input options (live or .pcap file)
-      * live capture
-      * .pcap file
-
+        * CSV output
+     * Input options (live or .pcap file)
+        * live capture
+        * .pcap file
 * Flags
     * -n reverse DNS lookup
     * -l live capture
