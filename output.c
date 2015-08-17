@@ -61,7 +61,6 @@ void reverse_dns_lookup(char * ip_addr, char * buffer){
   if(res){ /* TODO: Better error message */
     printf("things broke\n");
   }
- // printf("reverse: %si\n", node);
   strncpy(buffer, node, NI_MAXHOST);
 }
 
