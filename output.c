@@ -18,6 +18,8 @@
 #include <sys/types.h>
 #include <stdlib.h>
 #include <string.h>
+#include <arpa/inet.h>
+#include <netdb.h>
 
 #define BUF_SIZE 1024
 
@@ -34,63 +36,32 @@ void report_server_rtt(struct in_addr client, struct in_addr server, u_short spo
     char client_buf[BUF_SIZE], server_buf[BUF_SIZE];
     client_buf[BUF_SIZE - 1] = 0;
     server_buf[BUF_SIZE - 1] = 0;
-    reverse_dns_lookup(inet_ntoa(client), client_buf);
-    reverse_dns_lookup(inet_ntoa(server), server_buf);
+  /*  reverse_dns_lookup(inet_ntoa(client), client_buf);
+    reverse_dns_lookup(inet_ntoa(server), server_buf); */
     printf("%s:%d -> ", inet_ntoa(client), sport);
     printf("%s:%d %dms\n", inet_ntoa(server), dport, rtt);
- /*   printf("%s -> ", client_buf);
+  /*  printf("%s -> ", client_buf);
     printf("%s\n", server_buf); */
 }
 
+/*
+ * If reverse DNS flag is provided, we use getnameinfo() to perform the reverse
+ * DNS lookup. Write to buffer provided.
+ */
+
 void reverse_dns_lookup(char * ip_addr, char * buffer){
-  char dig_buf[BUF_SIZE], grep_buf[BUF_SIZE];
-  dig_buf[BUF_SIZE -1] = 0;
-  grep_buf[BUF_SIZE - 1] = 0;
-  int buf_len = 0;
+  struct sockaddr_in sa;
+  sa.sin_family = AF_INET;
+  inet_pton(AF_INET, ip_addr, &sa.sin_addr);
 
-  char * dig_args[] = { "dig", "-x", ip_addr, "+short", NULL};
-  buf_len = exec_cmd("dig", dig_args, dig_buf);
-
-  char * grep_args[] = { "grep", "-o", "[a-zA-Z].*", "<<<", dig_buf};
-  buf_len = exec_cmd("grep", grep_args, grep_buf);
-
-  strncpy(buffer, grep_buf, buf_len);
-  buffer[buf_len-1] = 0;
-}
-
-int exec_cmd(char * cmd, char ** args, char * buffer){
-  int pipefd[2];
-  int status;
-  int i;
-  int len = 0;
-  char output[BUF_SIZE];
-  pipe(pipefd);
-  //printf("Cmd is %s %s %s %s %s\n", args[0], args[1], args[2], args[3], args[4]);
-
-  pid_t pid = fork();
-  if(pid == 0){
-    close(pipefd[0]);
-    dup2(pipefd[1],1);
-    close(pipefd[1]);
-    execvp(cmd, args);
-    exit(0);
+  char node[NI_MAXHOST];
+  /* Final three arguments are NULL or 0 since we don't care about the server, servlen, or
+   * flags */
+  int res = getnameinfo((struct sockaddr*)&sa, sizeof(sa), node, sizeof(node), NULL, 0, 0);
+  if(res){ /* TODO: Better error message */
+    printf("things broke\n");
   }
-
-  else{
-    close(pipefd[1]);
-    while(read(pipefd[0], output, BUF_SIZE) != 0){
-    }
-
-    for(i = 0; i < BUF_SIZE; i++){
-      if(output[i] != 0){
-        len++;
-      }
-    }
-    waitpid(pid, &status, 0);
-  }
-    strncpy(buffer, output, len);
-    buffer[len-1] = 0;
-    return len;
+  strncpy(buffer, node, NI_MAXHOST);
 }
 
 
