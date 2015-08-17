@@ -19,6 +19,8 @@
 #include <stdlib.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
+#include <unistd.h>
+#include <sys/types.h>
 #include "decode.h"
 #include "session.h"
 
@@ -33,6 +35,12 @@ int main(int argc, char** argv) {
     char *dev;
     int ret;
     struct bpf_program *filter;
+
+    uid_t uid = getuid(), euid=geteuid();
+    if(uid != 0 && euid != 0){
+      fprintf(stderr, "Please run as root!\n");
+      exit(-1);
+    }
 
     /* ack_table = malloc(ACK_TABLE_SIZE * sizeof(struct session_rec*));
     for(int i = 0; i < ACK_TABLE_SIZE; i++){
