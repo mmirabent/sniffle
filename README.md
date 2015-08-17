@@ -12,7 +12,7 @@ Passive network health monitoring
     * switch from dig to syscall implementation
 * Data visualization? Maybe?
 * ~~Write more TODOs~~
-* Figure out an appropriate license
+* ~~Figure out an appropriate license~~
 * Basic usage documentation
 * Command Line Options
     * Output options
