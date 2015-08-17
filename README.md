@@ -4,12 +4,12 @@ Passive network health monitoring
 
 ## TODO
 
-* Check for root early. Die if not
+* ~~Check for root early. Die if not~~
 * ~~timeval difference in milliseconds function~~
 * ~~Write a better README~~
 * Add command line arguments
 * ~~DNS reverse lookups~~
-    * switch from dig to syscall implementation
+    * ~~switch from dig to syscall implementation~~
 * Data visualization? Maybe?
 * ~~Write more TODOs~~
 * ~~Figure out an appropriate license~~
