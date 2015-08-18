@@ -41,8 +41,17 @@ int main(int argc, char** argv) {
 
     process_options(argc, argv);
 
+    if(live_capture_dev) printf("%s\n", live_capture_dev);
+    else printf("No device specified\n");
+
+    if(capture_file) printf("%s\n", capture_file);
+    else printf("No capture file specified\n");
+
+    if(reverse_dns_flag) printf("Reverse DNS enabled\n");
+    else printf("Reverse DNS disabled (default)\n");
+
     uid = getuid();
-    euid=geteuid();
+    euid = geteuid();
 
     if(uid != 0 && euid != 0){
       fprintf(stderr, "Please run as root!\n");
