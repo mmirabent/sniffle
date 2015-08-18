@@ -18,10 +18,12 @@
 #include "decode.h"
 
 #define SYN_TABLE_SIZE 100
-static struct session_rec **syn_table;
-static u_int syn_table_idx;
+struct session_rec **syn_table;
+u_int syn_table_idx;
 
 #define ACK_TABLE_SIZE 100
+struct session_rec **ack_table;
+u_int ack_table_idx;
 
 struct session_rec {
     struct  in_addr ip_src;         /* source and dest address */

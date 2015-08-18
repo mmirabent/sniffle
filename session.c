@@ -17,8 +17,6 @@
 
 #include <stdlib.h>
 
-static struct session_rec **ack_table;
-static u_int ack_table_idx;
 
 void init_ack() {
     int i;
