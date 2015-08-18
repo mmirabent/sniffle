@@ -25,8 +25,8 @@
 #include "session.h"
 #include "options.h"
 
-void print_error(char* err);
-void print_pcap_err(pcap_t *p);
+void print_error(char* err) __attribute__((noreturn));
+void print_pcap_err(pcap_t *p) __attribute__((noreturn));
 void process_packet(u_char *user, const struct pcap_pkthdr *h, const u_char *bytes);
 
 int main(int argc, char** argv) {
@@ -34,13 +34,16 @@ int main(int argc, char** argv) {
     char errbuf[PCAP_ERRBUF_SIZE];
     pcap_t *capture;
     char *dev;
-    int ret;
+    int ret, i;
     struct bpf_program *filter;
+    uid_t uid, euid;
 
 
     process_options(argc, argv);
 
-    uid_t uid = getuid(), euid=geteuid();
+    uid = getuid();
+    euid=geteuid();
+
     if(uid != 0 && euid != 0){
       fprintf(stderr, "Please run as root!\n");
       exit(-1);
@@ -49,7 +52,7 @@ int main(int argc, char** argv) {
     init_ack();
 
     syn_table = malloc(SYN_TABLE_SIZE * sizeof(struct session_rec*));
-    for(int i = 0; i < SYN_TABLE_SIZE; i++){
+    for(i = 0; i < SYN_TABLE_SIZE; i++){
         syn_table[i] = NULL;
     }
     syn_table_idx = 0;

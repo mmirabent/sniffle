@@ -51,13 +51,14 @@ void report_server_rtt(struct in_addr client, struct in_addr server, u_short spo
 
 void reverse_dns_lookup(char * ip_addr, char * buffer){
   struct sockaddr_in sa;
+  char node[NI_MAXHOST];
+  int res;
   sa.sin_family = AF_INET;
   inet_pton(AF_INET, ip_addr, &sa.sin_addr);
 
-  char node[NI_MAXHOST];
   /* Final three arguments are NULL or 0 since we don't care about the server, servlen, or
    * flags */
-  int res = getnameinfo((struct sockaddr*)&sa, sizeof(sa), node, sizeof(node), NULL, 0, 0);
+  res = getnameinfo((struct sockaddr*)&sa, sizeof(sa), node, sizeof(node), NULL, 0, 0);
   if(res){ /* TODO: Better error message */
     printf("things broke\n");
   }

@@ -84,7 +84,6 @@ void process_options(int argc, char** argv) {
                 printf("-s number of half open connections tracked\n");
                 printf("-h help and usage\n");
                 exit(0);
-                break;
         }
     }
 }

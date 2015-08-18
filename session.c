@@ -17,9 +17,13 @@
 
 #include <stdlib.h>
 
+static struct session_rec **ack_table;
+static u_int ack_table_idx;
+
 void init_ack() {
+    int i;
     ack_table = malloc(ACK_TABLE_SIZE * sizeof(struct session_rec*));
-    for(int i = 0; i < ACK_TABLE_SIZE; i++){
+    for(i = 0; i < ACK_TABLE_SIZE; i++){
         ack_table[i] = NULL;
     }
     ack_table_idx = 0;
@@ -91,9 +95,9 @@ void find_in_syn(const struct sniff_ip* ip, const struct sniff_tcp* tcp, struct 
      * neater and more straightforward to read */
     struct session_rec* sess2 = build_session(ip, tcp, ts);
     struct session_rec* sess1;
-    int delta;
+    int delta, i;
 
-    for(int i = 0; i < SYN_TABLE_SIZE; i++) {
+    for(i = 0; i < SYN_TABLE_SIZE; i++) {
         sess1 = syn_table[i];
         /* Check that both structs are non-NULL and then match source ip to
          * destination ip and source port to destination port */
@@ -130,9 +134,9 @@ void find_in_ack(const struct sniff_ip* ip, const struct sniff_tcp* tcp, struct 
      * neater and more straightforward to read */
     struct session_rec* sess2 = build_session(ip, tcp, ts);
     struct session_rec* sess1;
-    int delta;
+    int delta, i;
 
-    for(int i = 0; i < ACK_TABLE_SIZE; i++) {
+    for(i = 0; i < ACK_TABLE_SIZE; i++) {
         sess1 = ack_table[i];
         /* Check that both structs are non-NULL and then match source ip to
          * destination ip and source port to destination port */

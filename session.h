@@ -18,12 +18,10 @@
 #include "decode.h"
 
 #define SYN_TABLE_SIZE 100
-struct session_rec **syn_table;
-u_int syn_table_idx;
+static struct session_rec **syn_table;
+static u_int syn_table_idx;
 
 #define ACK_TABLE_SIZE 100
-struct session_rec **ack_table;
-u_int ack_table_idx;
 
 struct session_rec {
     struct  in_addr ip_src;         /* source and dest address */
@@ -39,7 +37,7 @@ void add_to_syn(const struct sniff_ip* ip, const struct sniff_tcp* tcp, struct t
 void add_to_ack(const struct sniff_ip* ip, const struct sniff_tcp* tcp, struct timeval ts);
 void find_in_syn(const struct sniff_ip* ip, const struct sniff_tcp* tcp, struct timeval ts);
 void find_in_ack(const struct sniff_ip* ip, const struct sniff_tcp* tcp, struct timeval ts);
-void init_ack();
+void init_ack(void);
 struct session_rec* build_session(const struct sniff_ip* ip, const struct sniff_tcp* tcp, struct timeval ts);
 
 #endif
