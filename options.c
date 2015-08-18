@@ -80,7 +80,7 @@ void process_options(int argc, char** argv) {
                 printf("-l live capture\n");
                 printf("-f packet capture\n");
                 printf("-o csv output\n");
-                printf("-n reverse-dns");
+                printf("-n reverse-dns\n");
                 printf("-s number of half open connections tracked\n");
                 printf("-h help and usage\n");
                 exit(0);
