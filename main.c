@@ -23,6 +23,7 @@
 #include <sys/types.h>
 #include "decode.h"
 #include "session.h"
+#include "options.h"
 
 void print_error(char* err);
 void print_pcap_err(pcap_t *p);
@@ -36,17 +37,15 @@ int main(int argc, char** argv) {
     int ret;
     struct bpf_program *filter;
 
+
+    process_options(argc, argv);
+
     uid_t uid = getuid(), euid=geteuid();
     if(uid != 0 && euid != 0){
       fprintf(stderr, "Please run as root!\n");
       exit(-1);
     }
 
-    /* ack_table = malloc(ACK_TABLE_SIZE * sizeof(struct session_rec*));
-    for(int i = 0; i < ACK_TABLE_SIZE; i++){
-        ack_table[i] = NULL;
-    }
-    ack_table_idx = 0; */
     init_ack();
 
     syn_table = malloc(SYN_TABLE_SIZE * sizeof(struct session_rec*));
