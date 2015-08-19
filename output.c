@@ -23,7 +23,7 @@
 
 #define BUF_SIZE 1024
 
-void report_server_rtt(struct in_addr client, struct in_addr server, u_short sport, u_short dport, int rtt);
+void report_server_rtt(struct in_addr client, struct in_addr server, uint16_t sport, uint16_t dport, int rtt);
 void reverse_dns_lookup(char * ip_addr, char * buffer);
 int exec_cmd(char * cmd, char ** args, char * buffer);
 
@@ -32,7 +32,7 @@ int exec_cmd(char * cmd, char ** args, char * buffer);
  * changed to print to a file.
  */
 
-void report_server_rtt(struct in_addr client, struct in_addr server, u_short sport, u_short dport, int rtt) {
+void report_server_rtt(struct in_addr client, struct in_addr server, uint16_t sport, uint16_t dport, int rtt) {
     char client_buf[BUF_SIZE], server_buf[BUF_SIZE];
     client_buf[BUF_SIZE - 1] = 0;
     server_buf[BUF_SIZE - 1] = 0;
