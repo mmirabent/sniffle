@@ -25,9 +25,11 @@
 #include "session.h"
 #include "options.h"
 
-void print_error(char* err) __attribute__((noreturn));
+void print_error(const char* err) __attribute__((noreturn));
 void print_pcap_err(pcap_t *p) __attribute__((noreturn));
 void process_packet(uint8_t *user, const struct pcap_pkthdr *h, const uint8_t *bytes);
+void check_for_root(void);
+void set_live_capture_options(pcap_t* capture);
 
 struct session_rec **syn_table;
 unsigned int syn_table_idx;
@@ -39,27 +41,53 @@ int main(int argc, char** argv) {
     char *dev;
     int ret, i;
     struct bpf_program *filter;
-    uid_t uid, euid;
 
+    /* If not enough options, print usage and die */
+    if(argc < 2) {
+        print_usage();
+        return(-1);
+    }
 
+    /* Process options, see options.c */
     process_options(argc, argv);
 
-    if(live_capture_dev) printf("%s\n", live_capture_dev);
-    else printf("No device specified\n");
+    /* Set up the capture handle */
+    capture = NULL;
+    if(live_capture_flag) {
+        /* If we're doing a live capture, we need root */
+        check_for_root();
+        
+        /* If a device was supplied use it, otherwise lookup one */
+        if(live_capture_dev) dev = live_capture_dev;
+        else dev = pcap_lookupdev(errbuf);
+        
+        /* If dev is null, something went wrong with pcap_lookupdev */
+        if(!dev) print_error(errbuf);
 
-    if(capture_file) printf("%s\n", capture_file);
-    else printf("No capture file specified\n");
+        /* Create a pcap file handle for doing a live capture */
+        capture = pcap_create(dev, errbuf); 
+        if(!capture) print_error(errbuf);
 
-    if(reverse_dns_flag) printf("Reverse DNS enabled\n");
-    else printf("Reverse DNS disabled (default)\n");
+        /* Set options and activate capture device */
+        set_live_capture_options(capture);
 
-    uid = getuid();
-    euid = geteuid();
+    } else if (capture_file) {
+        /* Open an offline capture from the provided filename. The
+         * pcap_open_offline function will do existence and permission checks
+         * for us, and provide a helpful error message in errbuf if needed
+         */
+        capture = pcap_open_offline(capture_file, errbuf);
+        if(!capture) print_error(errbuf);
 
-    if(uid != 0 && euid != 0){
-      fprintf(stderr, "Please run as root!\n");
-      exit(-1);
+    } else {
+        /* We have neither a live capture nor a capture file. Print a useful
+         * error message, then usage, then die */
+        fprintf(stderr, "No live capture device or capture file specified\n");
+        print_usage();
     }
+    
+    /* Sanity check, capture should be set at this point */
+    if(!capture) print_error("Something is terribly wrong, no capture device or file");
 
     init_ack();
 
@@ -69,35 +97,6 @@ int main(int argc, char** argv) {
     }
     syn_table_idx = 0;
 
-    /* If no command line arguments given, lookup a device to open. Else use 
-     * first argument */
-    if(argc < 2)
-        dev = pcap_lookupdev(errbuf);
-    else
-        dev = argv[1];
-
-    /* If error occurs, print it and die*/
-    if(!dev) print_error(errbuf);
-
-    /* Create a pcap file handle for doing a live capture */
-    capture = pcap_create(dev, errbuf); 
-    if(!capture) print_error(errbuf);
-
-    /* Set a short snapshot length, as all we want to see are the headers */
-    pcap_set_snaplen(capture, 64); 
-
-    /* Set to promiscuous mode */
-    pcap_set_promisc(capture, 1);
-
-    /* Set the read timeout in ms, this allows packets to buffer before waking 
-       the application and processing them */
-    pcap_set_timeout(capture, 50); 
-
-    /* activate pcap handle. This must be done after the create. options
-       should be set before calling this */
-    ret = pcap_activate(capture);
-    if(ret)
-        print_pcap_err(capture);
 
     /* Set up the packet filter and compile it down */
     filter = malloc(sizeof(struct bpf_program));
@@ -118,7 +117,7 @@ int main(int argc, char** argv) {
 }
 
 /*
- * This is the callback function used by pcal_loop to process packets. Packets
+ * This is the callback function used by pcap_loop to process packets. Packets
  * appear as byte arrays, here called 'packet' that are at most 'snap_len' long.
  * The actual length is stored in the pcap_pkthdr struct 'h'. We don't really
  * care becasue all we're interested in is the TCP and IP headers. The pragma
@@ -164,7 +163,7 @@ void process_packet(uint8_t *user, const struct pcap_pkthdr *h, const uint8_t *p
 /*
  * Prints error messages and dies
  */
-void print_error(char* err) {
+void print_error(const char* err) {
     fprintf(stderr, "An error has occurred: %s\n", err);
     exit(1);
 }
@@ -176,4 +175,35 @@ void print_pcap_err(pcap_t *p) {
     print_error(pcap_geterr(p));
 }
 
+void check_for_root() {
+    uid_t uid, euid;
+
+    uid = getuid();
+    euid = geteuid();
+
+    if(uid != 0 && euid != 0){
+      fprintf(stderr, "Please run as root!\n");
+      exit(-1);
+    }
+}
+
+void set_live_capture_options(pcap_t* capture) {
+    int ret;
+
+    /* Set a short snapshot length, as all we want to see are the headers */
+    pcap_set_snaplen(capture, 64); 
+
+    /* Set to promiscuous mode */
+    pcap_set_promisc(capture, 1);
+
+    /* Set the read timeout in ms, this allows packets to buffer before waking 
+       the application and processing them */
+    pcap_set_timeout(capture, 50); 
+
+    /* activate pcap handle. This must be done after the create. options
+       should be set before calling this */
+    ret = pcap_activate(capture);
+    if(ret)
+        print_pcap_err(capture);
+}
 

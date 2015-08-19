@@ -20,6 +20,7 @@
 
 int reverse_dns_flag;
 char* live_capture_dev;
+int live_capture_flag;
 char* capture_file;
 char* csv_output_file;
 long int size;
@@ -27,13 +28,14 @@ long int size;
 void process_options(int argc, char** argv) {
     int c;
     live_capture_dev = NULL;
+    live_capture_flag = 0;
     capture_file = NULL;
     size = 100; /* Default table size */
     while(1) {
         static struct option long_options[] = 
         {
             {"reverse-dns",  no_argument,       0, 'n'},
-            {"live-capture", required_argument, 0, 'l'},
+            {"live-capture", optional_argument, 0, 'l'},
             {"file-input",   required_argument, 0, 'f'},
             {"csv-output",   required_argument, 0, 'o'},
             {"size",         required_argument, 0, 's'},
@@ -44,7 +46,7 @@ void process_options(int argc, char** argv) {
         int option_index = 0;
         char *end;
 
-        c = getopt_long(argc, argv, "nhl:f:o:s:", long_options, &option_index);
+        c = getopt_long(argc, argv, "nhl::f:o:s:", long_options, &option_index);
 
 
         if(c == -1) break; /* End of options */
@@ -54,6 +56,7 @@ void process_options(int argc, char** argv) {
                 reverse_dns_flag = 1;
                 break;
             case 'l':
+                live_capture_flag = 1;
                 live_capture_dev = optarg;
                 break;
             case 'f':
@@ -76,15 +79,25 @@ void process_options(int argc, char** argv) {
                 }
                 break;
             case 'h':
-                printf("usage: ./main [-l | -f input.pcap] [-o output.csv] [-s value] [-n] [-h] \n");
-                printf("    -l live capture\n");
-                printf("    -f packet capture\n");
-                printf("    -o csv output\n");
-                printf("    -n reverse-dns\n");
-                printf("    -s number of half open connections tracked\n");
-                printf("    -h help and usage\n");
+                print_usage();
                 exit(0);
+            /* If getopt_long encounters an error processing the arguments, it
+             * will spit out an error message and return ?. If that happens,
+             * print something informative and die */
+            case '?':
+                print_usage();
+                exit(1);
+
         }
     }
+}
+
+void print_usage() {
+    printf("usage: ./main [-l | -f input.pcap] [-o output.csv] [-s value] [-n] [-h] \n");
+    printf("    -l live capture\n");
+    printf("    -f packet capture\n");
+    printf("    -o csv output\n");
+    printf("    -n reverse-dns\n");
+    printf("    -s number of half open connections tracked\n");
 }
 
