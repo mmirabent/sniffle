@@ -10,7 +10,8 @@ then
     exit;
 fi
 
-# Test the sniffle program
+# Test the live capture
+echo Testing live capture
 ./sniffle -l &
 SNIFFLE_PID=$!
 
@@ -18,4 +19,15 @@ SNIFFLE_PID=$!
 python generate_connections.py
 
 kill -9  $SNIFFLE_PID
+
+echo Testing file input
+tcpdump -c 100 -w /tmp/foo.pcap &
+
+python generate_connections.py
+
+wait
+
+./sniffle -f /tmp/foo.pcap
+
+rm /tmp/foo.pcap
 
