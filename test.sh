@@ -11,7 +11,7 @@ then
 fi
 
 # Test the sniffle program
-./sniffle &
+./sniffle -l &
 SNIFFLE_PID=$!
 
 # Generate TCP connections
