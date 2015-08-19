@@ -19,7 +19,7 @@
 
 #define ACK_TABLE_SIZE 100
 static struct session_rec **ack_table;
-static u_int ack_table_idx;
+static unsigned int ack_table_idx;
 
 void init_ack() {
     int i;

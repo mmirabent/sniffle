@@ -27,10 +27,10 @@
 
 void print_error(char* err) __attribute__((noreturn));
 void print_pcap_err(pcap_t *p) __attribute__((noreturn));
-void process_packet(u_char *user, const struct pcap_pkthdr *h, const u_char *bytes);
+void process_packet(uint8_t *user, const struct pcap_pkthdr *h, const uint8_t *bytes);
 
 struct session_rec **syn_table;
-u_int syn_table_idx;
+unsigned int syn_table_idx;
 
 int main(int argc, char** argv) {
     /* Error buffer used by many pcap functions to return error messages */
@@ -128,7 +128,7 @@ int main(int argc, char** argv) {
  */
 #pragma clang diagnostic push
 #pragma GCC diagnostic ignored "-Wunused-parameter"
-void process_packet(u_char *user, const struct pcap_pkthdr *h, const u_char *packet) {
+void process_packet(uint8_t *user, const struct pcap_pkthdr *h, const uint8_t *packet) {
     /* declare the ip and tcp structs that will allow us to easily access the
      * data later */
     const struct sniff_ip *ip;
