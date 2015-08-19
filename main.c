@@ -25,10 +25,11 @@
 #include "session.h"
 #include "options.h"
 
-void print_error(char* err) __attribute__((noreturn));
+void print_error(const char* err) __attribute__((noreturn));
 void print_pcap_err(pcap_t *p) __attribute__((noreturn));
 void process_packet(uint8_t *user, const struct pcap_pkthdr *h, const uint8_t *bytes);
 void check_for_root(void);
+void set_live_capture_options(pcap_t* capture);
 
 struct session_rec **syn_table;
 unsigned int syn_table_idx;
@@ -47,14 +48,11 @@ int main(int argc, char** argv) {
         return(-1);
     }
 
+    /* Process options, see options.c */
     process_options(argc, argv);
 
-    if(capture_file) printf("%s\n", capture_file);
-    else printf("No capture file specified\n");
-
-    if(reverse_dns_flag) printf("Reverse DNS enabled\n");
-    else printf("Reverse DNS disabled (default)\n");
-
+    /* Set up the capture handle */
+    capture = NULL;
     if(live_capture_flag) {
         /* If we're doing a live capture, we need root */
         check_for_root();
@@ -70,8 +68,16 @@ int main(int argc, char** argv) {
         capture = pcap_create(dev, errbuf); 
         if(!capture) print_error(errbuf);
 
+        /* Set options and activate capture device */
+        set_live_capture_options(capture);
+
     } else if (capture_file) {
-        /* TODO: Check for read perm and existence of capture file */
+        /* Open an offline capture from the provided filename. The
+         * pcap_open_offline function will do existence and permission checks
+         * for us, and provide a helpful error message in errbuf if needed
+         */
+        capture = pcap_open_offline(capture_file, errbuf);
+        if(!capture) print_error(errbuf);
 
     } else {
         /* We have neither a live capture nor a capture file. Print a useful
@@ -79,6 +85,9 @@ int main(int argc, char** argv) {
         fprintf(stderr, "No live capture device or capture file specified\n");
         print_usage();
     }
+    
+    /* Sanity check, capture should be set at this point */
+    if(!capture) print_error("Something is terribly wrong, no capture device or file");
 
     init_ack();
 
@@ -88,22 +97,6 @@ int main(int argc, char** argv) {
     }
     syn_table_idx = 0;
 
-
-    /* Set a short snapshot length, as all we want to see are the headers */
-    pcap_set_snaplen(capture, 64); 
-printf("1");
-    /* Set to promiscuous mode */
-    pcap_set_promisc(capture, 1);
-
-    /* Set the read timeout in ms, this allows packets to buffer before waking 
-       the application and processing them */
-    pcap_set_timeout(capture, 50); 
-
-    /* activate pcap handle. This must be done after the create. options
-       should be set before calling this */
-    ret = pcap_activate(capture);
-    if(ret)
-        print_pcap_err(capture);
 
     /* Set up the packet filter and compile it down */
     filter = malloc(sizeof(struct bpf_program));
@@ -124,7 +117,7 @@ printf("1");
 }
 
 /*
- * This is the callback function used by pcal_loop to process packets. Packets
+ * This is the callback function used by pcap_loop to process packets. Packets
  * appear as byte arrays, here called 'packet' that are at most 'snap_len' long.
  * The actual length is stored in the pcap_pkthdr struct 'h'. We don't really
  * care becasue all we're interested in is the TCP and IP headers. The pragma
@@ -170,7 +163,7 @@ void process_packet(uint8_t *user, const struct pcap_pkthdr *h, const uint8_t *p
 /*
  * Prints error messages and dies
  */
-void print_error(char* err) {
+void print_error(const char* err) {
     fprintf(stderr, "An error has occurred: %s\n", err);
     exit(1);
 }
@@ -192,5 +185,25 @@ void check_for_root() {
       fprintf(stderr, "Please run as root!\n");
       exit(-1);
     }
+}
+
+void set_live_capture_options(pcap_t* capture) {
+    int ret;
+
+    /* Set a short snapshot length, as all we want to see are the headers */
+    pcap_set_snaplen(capture, 64); 
+
+    /* Set to promiscuous mode */
+    pcap_set_promisc(capture, 1);
+
+    /* Set the read timeout in ms, this allows packets to buffer before waking 
+       the application and processing them */
+    pcap_set_timeout(capture, 50); 
+
+    /* activate pcap handle. This must be done after the create. options
+       should be set before calling this */
+    ret = pcap_activate(capture);
+    if(ret)
+        print_pcap_err(capture);
 }
 
