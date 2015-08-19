@@ -29,6 +29,9 @@ void print_error(char* err) __attribute__((noreturn));
 void print_pcap_err(pcap_t *p) __attribute__((noreturn));
 void process_packet(u_char *user, const struct pcap_pkthdr *h, const u_char *bytes);
 
+struct session_rec **syn_table;
+u_int syn_table_idx;
+
 int main(int argc, char** argv) {
     /* Error buffer used by many pcap functions to return error messages */
     char errbuf[PCAP_ERRBUF_SIZE];
@@ -123,6 +126,7 @@ int main(int argc, char** argv) {
  * The user pointer would allow pcap_loop to pass a pointer to the callback
  * function, but for our purposes it's uneccessary.
  */
+#pragma clang diagnostic push
 #pragma GCC diagnostic ignored "-Wunused-parameter"
 void process_packet(u_char *user, const struct pcap_pkthdr *h, const u_char *packet) {
     /* declare the ip and tcp structs that will allow us to easily access the
@@ -134,6 +138,8 @@ void process_packet(u_char *user, const struct pcap_pkthdr *h, const u_char *pac
 
     /* By casting the correct memory address to the ip and tcp structs, we can
      * use the structs to get at the important information in the packet headers */
+#pragma clang diagnostic push
+#pragma GCC diagnostic ignored "-Wcast-align"
     ip = (struct sniff_ip*)(packet + SIZE_ETHERNET);
     size_ip = IP_HL(ip)*4;
     if(size_ip < 20) return; /* Invalid IP header, die*/
@@ -141,6 +147,7 @@ void process_packet(u_char *user, const struct pcap_pkthdr *h, const u_char *pac
     tcp = (struct sniff_tcp*)(packet + SIZE_ETHERNET + size_ip);
     size_tcp = TH_OFF(tcp)*4;
     if(size_tcp < 20) return; /* Invalid TCP header, die*/
+#pragma clang diagnostic pop
 
     /* This is where the magic starts */
     if(tcp->th_flags == TH_SYN) {   /* If the packet has the SYN flag set */
@@ -152,6 +159,7 @@ void process_packet(u_char *user, const struct pcap_pkthdr *h, const u_char *pac
         find_in_ack(ip, tcp, h->ts);
     }
 }
+#pragma clang diagnostic pop
 
 /*
  * Prints error messages and dies

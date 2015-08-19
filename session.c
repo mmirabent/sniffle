@@ -17,6 +17,9 @@
 
 #include <stdlib.h>
 
+#define ACK_TABLE_SIZE 100
+static struct session_rec **ack_table;
+static u_int ack_table_idx;
 
 void init_ack() {
     int i;
@@ -46,9 +49,9 @@ struct session_rec* build_session(const struct sniff_ip* ip, const struct sniff_
 
 /* Calcualte the delta in ms between ts1 and ts2. */
 int calc_delta(struct timeval ts1, struct timeval ts2) {
-    int delta_sec = (ts2.tv_sec - ts1.tv_sec)*1000;
-    int delta_msec = (ts2.tv_usec - ts1.tv_usec)/1000;
-    return (delta_sec + delta_msec);
+    long int delta_sec = (ts2.tv_sec - ts1.tv_sec)*1000;
+    long int delta_msec = (ts2.tv_usec - ts1.tv_usec)/1000;
+    return (int)(delta_sec + delta_msec);
 }
 
 /*

@@ -22,7 +22,7 @@ int reverse_dns_flag;
 char* live_capture_dev;
 char* capture_file;
 char* csv_output_file;
-int size;
+long int size;
 
 void process_options(int argc, char** argv) {
     int c;
