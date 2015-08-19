@@ -91,7 +91,7 @@ int main(int argc, char** argv) {
 
     /* Set a short snapshot length, as all we want to see are the headers */
     pcap_set_snaplen(capture, 64); 
-
+printf("1");
     /* Set to promiscuous mode */
     pcap_set_promisc(capture, 1);
 
