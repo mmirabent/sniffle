@@ -20,7 +20,6 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <unistd.h>
-#include <sys/types.h>
 #include "decode.h"
 #include "session.h"
 #include "options.h"

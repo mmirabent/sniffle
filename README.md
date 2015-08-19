@@ -7,7 +7,7 @@ Passive network health monitoring
 * ~~Check for root early. Die if not~~
 * ~~timeval difference in milliseconds function~~
 * ~~Write a better README~~
-* Add command line arguments
+* ~~Add command line arguments~~
 * ~~DNS reverse lookups~~
     * ~~switch from dig to syscall implementation~~
 * Data visualization? Maybe?
@@ -17,9 +17,9 @@ Passive network health monitoring
 * Command Line Options
     * Output options
         * CSV output
-    * Input options (live or .pcap file)
-        * live capture
-        * .pcap file
+    * ~~Input options (live or .pcap file)~~
+        * ~~live capture~~
+        * ~~.pcap file~~
 
 ## Tentative flags
 
@@ -34,5 +34,11 @@ Passive network health monitoring
 
 ## Usage
 
-Compile with `make`. Run with sudo, open up your browser and generate
-some traffic.
+Compile with `make`. Run with sudo, open up your browser and generate some
+traffic. Alternately, use `make test` to run an automated test.
+
+## Before committing
+
+Please check that make test succeeds before committing code, and preferably,
+add a section testing the new feature you implemented
+
