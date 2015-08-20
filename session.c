@@ -14,6 +14,7 @@
  */
 #include "session.h"
 #include "output.h"
+#include "options.h"
 
 #include <stdlib.h>
 
@@ -108,9 +109,8 @@ void find_in_syn(const struct sniff_ip* ip, const struct sniff_tcp* tcp, struct 
                 sess2->sport == sess1->dport &&
                 sess2->dport == sess1->sport) {
             /* Match found, calculate delta */
-           /*  delta = (sess2->ts.tv_usec - sess1->ts.tv_usec)/1000; */
-               delta = calc_delta(sess1->ts, sess2->ts);
-            report_server_rtt(sess1->ip_src, sess1->ip_dst, sess1->sport, sess1->dport, delta);
+            delta = calc_delta(sess1->ts, sess2->ts);
+            report_server_rtt(sess1->ip_src, sess1->ip_dst, sess1->sport, sess1->dport, delta, reverse_dns_flag);
 
             /* Free the memory allocated and clear the space in the array to 
              * prevent double freeing memory later */
@@ -148,7 +148,7 @@ void find_in_ack(const struct sniff_ip* ip, const struct sniff_tcp* tcp, struct 
                 sess2->dport == sess1->sport) {
             /* Match found, calculate delta */
             delta = calc_delta(sess1->ts, sess2->ts);
-            report_server_rtt(sess1->ip_src, sess1->ip_dst, sess1->sport, sess1->dport, delta);
+            report_server_rtt(sess1->ip_src, sess1->ip_dst, sess1->sport, sess1->dport, delta, reverse_dns_flag);
 
             /* Free the memory allocated and clear the space in the array to 
              * prevent double freeing memory later */

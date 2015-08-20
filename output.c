@@ -22,46 +22,45 @@
 
 #define BUF_SIZE 1024
 
-void reverse_dns_lookup(char * ip_addr, char * buffer);
+void reverse_dns_lookup(struct in_addr ip_addr, char* buffer, socklen_t buff_size);
 int exec_cmd(char * cmd, char ** args, char * buffer);
 
 /* 
  * At this point, this function just prints to stdout. However, this could be
  * changed to print to a file.
  */
-
-void report_server_rtt(struct in_addr client, struct in_addr server, uint16_t sport, uint16_t dport, int rtt) {
-    char client_buf[BUF_SIZE], server_buf[BUF_SIZE];
-    client_buf[BUF_SIZE - 1] = 0;
-    server_buf[BUF_SIZE - 1] = 0;
-  /*  reverse_dns_lookup(inet_ntoa(client), client_buf);
-    reverse_dns_lookup(inet_ntoa(server), server_buf); */
-    printf("%s:%d -> ", inet_ntoa(client), sport);
-    printf("%s:%d %dms\n", inet_ntoa(server), dport, rtt);
-  /*  printf("%s -> ", client_buf);
-    printf("%s\n", server_buf); */
+void report_server_rtt(struct in_addr client, struct in_addr server, uint16_t sport, uint16_t dport, int rtt, int reverse_lookup) {
+    if(reverse_lookup) {
+        char client_buf[BUF_SIZE], server_buf[BUF_SIZE];
+        client_buf[BUF_SIZE - 1] = 0;
+        server_buf[BUF_SIZE - 1] = 0;
+        reverse_dns_lookup(client, client_buf, BUF_SIZE);
+        reverse_dns_lookup(server, server_buf, BUF_SIZE); 
+        printf("%s:%d -> ", client_buf, sport);
+        printf("%s:%d %dms\n",server_buf, dport, rtt);
+    } else {
+        printf("%s:%d -> ", inet_ntoa(client), sport);
+        printf("%s:%d %dms\n", inet_ntoa(server), dport, rtt);
+    }
 }
 
 /*
  * If reverse DNS flag is provided, we use getnameinfo() to perform the reverse
  * DNS lookup. Write to buffer provided.
  */
-
-void reverse_dns_lookup(char * ip_addr, char * buffer){
+void reverse_dns_lookup(struct in_addr ip_addr, char* buffer, socklen_t buff_size){
   struct sockaddr_in sa;
-  char node[NI_MAXHOST];
   int res;
 
   sa.sin_family = AF_INET;
-  inet_pton(AF_INET, ip_addr, &sa.sin_addr);
+  sa.sin_addr = ip_addr;
 
   /* Final three arguments are NULL or 0 since we don't care about the server, servlen, or
    * flags */
-  res = getnameinfo((struct sockaddr*)&sa, sizeof(sa), node, sizeof(node), NULL, 0, 0);
+  res = getnameinfo((struct sockaddr*)&sa, sizeof(sa), buffer, buff_size, NULL, 0, 0);
   if(res){ /* TODO: Better error message */
     printf("things broke\n");
   }
-  strncpy(buffer, node, NI_MAXHOST);
 }
 
 
