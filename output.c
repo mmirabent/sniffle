@@ -15,7 +15,6 @@
 #include "output.h"
 #include <unistd.h>
 #include <stdio.h>
-#include <sys/types.h>
 #include <stdlib.h>
 #include <string.h>
 #include <arpa/inet.h>
@@ -23,7 +22,6 @@
 
 #define BUF_SIZE 1024
 
-void report_server_rtt(struct in_addr client, struct in_addr server, uint16_t sport, uint16_t dport, int rtt);
 void reverse_dns_lookup(char * ip_addr, char * buffer);
 int exec_cmd(char * cmd, char ** args, char * buffer);
 
@@ -53,6 +51,7 @@ void reverse_dns_lookup(char * ip_addr, char * buffer){
   struct sockaddr_in sa;
   char node[NI_MAXHOST];
   int res;
+
   sa.sin_family = AF_INET;
   inet_pton(AF_INET, ip_addr, &sa.sin_addr);
 
