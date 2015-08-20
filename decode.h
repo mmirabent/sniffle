@@ -12,6 +12,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
+/**
+ * \file
+ * \brief Packet decoding
+ */
+
 #ifndef __PCM_DECODE_H
 #define __PCM_DECODE_H
 

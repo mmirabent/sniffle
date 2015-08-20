@@ -4,6 +4,9 @@ sniffle : main.c decode.h session.h session.c output.c output.h options.c option
 test : sniffle
 	sudo ./test.sh
 
-.PHONY : test
+doc : main.c decode.h session.h session.c output.h output.c options.h options.c
+	doxygen Doxyfile
+
+.PHONY : test doc
 
 

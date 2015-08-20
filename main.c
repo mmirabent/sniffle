@@ -13,6 +13,12 @@
  * limitations under the License.
  */
 
+/*! \file main.c
+ *  \brief Entry point
+ *
+ *  This is where the main function resides and where execution starts
+ */
+
 
 #include <pcap/pcap.h>
 #include <stdio.h>
@@ -115,7 +121,9 @@ int main(int argc, char** argv) {
     return 0;
 }
 
-/*
+/*!
+ * \brief callback function for pcap_loop
+ *
  * This is the callback function used by pcap_loop to process packets. Packets
  * appear as byte arrays, here called 'packet' that are at most 'snap_len' long.
  * The actual length is stored in the pcap_pkthdr struct 'h'. We don't really
