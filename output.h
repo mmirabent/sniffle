@@ -18,6 +18,6 @@
 #include <pcap/pcap.h>
 #include <arpa/inet.h>
 
-void report_server_rtt(struct in_addr client, struct in_addr server, u_short sport, u_short dport, int rtt);
+void report_server_rtt(struct in_addr client, struct in_addr server, uint16_t sport, uint16_t dport, int rtt, int reverse_lookup);
 
 #endif

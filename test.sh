@@ -29,5 +29,8 @@ wait
 
 ./sniffle -f /tmp/foo.pcap
 
+echo Testing reverse DNS lookup
+./sniffle -nf /tmp/foo.pcap
+
 rm /tmp/foo.pcap
 
