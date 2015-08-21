@@ -12,6 +12,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
+/**
+ * \file
+ * \brief Options header file
+ *
+ * Contains function headers for command line flag parsing and global variables
+ * to indicate command line flags parsed
+ */
+
 #ifndef __PCM_OPTIONS_H
 #define __PCM_OPTIONS_H
 

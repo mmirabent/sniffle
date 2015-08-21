@@ -2,3 +2,5 @@ sniffle
 .DS_Store
 main
 *.dSYM
+doc/*
+

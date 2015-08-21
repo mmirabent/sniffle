@@ -12,6 +12,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
+/**
+ * \file
+ * \brief Session handling
+ *
+ * This file documents session handling and tracking. It calls upon the output
+ * code as well to record round trip times
+ */
+
 #ifndef __PCM_SESSION_H
 #define __PCM_SESSION_H
 

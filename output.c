@@ -12,6 +12,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
+/**
+ * \file
+ * \brief Output code
+ */
+
 #include "output.h"
 #include <unistd.h>
 #include <stdio.h>
@@ -30,18 +36,17 @@ int exec_cmd(char * cmd, char ** args, char * buffer);
  * changed to print to a file.
  */
 void report_server_rtt(struct in_addr client, struct in_addr server, uint16_t sport, uint16_t dport, int rtt, int reverse_lookup) {
+    char client_buf[BUF_SIZE], server_buf[BUF_SIZE];
     if(reverse_lookup) {
-        char client_buf[BUF_SIZE], server_buf[BUF_SIZE];
-        client_buf[BUF_SIZE - 1] = 0;
-        server_buf[BUF_SIZE - 1] = 0;
         reverse_dns_lookup(client, client_buf, BUF_SIZE);
         reverse_dns_lookup(server, server_buf, BUF_SIZE); 
-        printf("%s:%d -> ", client_buf, sport);
-        printf("%s:%d %dms\n",server_buf, dport, rtt);
     } else {
-        printf("%s:%d -> ", inet_ntoa(client), sport);
-        printf("%s:%d %dms\n", inet_ntoa(server), dport, rtt);
+        inet_ntop(AF_INET, &client, client_buf, BUF_SIZE);
+        inet_ntop(AF_INET, &server, server_buf, BUF_SIZE);
     }
+
+    printf("%s:%d -> ", client_buf, ntohs(sport));
+    printf("%s:%d %dms\n", server_buf, ntohs(dport), rtt);
 }
 
 /*

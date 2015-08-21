@@ -13,6 +13,12 @@
  * limitations under the License.
  */
 
+/** \file main.c
+ *  \brief Entry point
+ *
+ *  This is where the main function resides and where execution starts
+ */
+
 
 #include <pcap/pcap.h>
 #include <stdio.h>
@@ -115,14 +121,22 @@ int main(int argc, char** argv) {
     return 0;
 }
 
-/*
+/**
+ * \brief callback function for pcap_loop
+ *
  * This is the callback function used by pcap_loop to process packets. Packets
- * appear as byte arrays, here called 'packet' that are at most 'snap_len' long.
- * The actual length is stored in the pcap_pkthdr struct 'h'. We don't really
+ * appear as byte arrays, here called `packet` that are at most `snap_len` long.
+ * The actual length is stored in the pcap_pkthdr struct `h`. We don't really
  * care becasue all we're interested in is the TCP and IP headers. The pragma
- * below is used to suppress warnings about the user pointer not being used.
- * The user pointer would allow pcap_loop to pass a pointer to the callback
+ * below is used to suppress warnings about the `user` pointer not being used.
+ * The `user` pointer would allow `pcap_loop` to pass a pointer to the callback
  * function, but for our purposes it's uneccessary.
+ *
+ * \param[in] user          A user defined byte pcap_loop will pass to the
+ *                          callback function. We're not using it here.
+ * \param[in] pcap_pkthdr   The pcap packet header, includes layer 1 info as 
+ *                          as well as timestamps.
+ * \param[in] packet        The binary data of the packet itself.
  */
 #pragma clang diagnostic push
 #pragma GCC diagnostic ignored "-Wunused-parameter"
@@ -159,21 +173,38 @@ void process_packet(uint8_t *user, const struct pcap_pkthdr *h, const uint8_t *p
 }
 #pragma clang diagnostic pop
 
-/*
- * Prints error messages and dies
+/**
+ * \brief Prints error messages and dies
+ *
+ * This function will print to stderr the string "An error has occurred: "
+ * followed by the provided string err. It then exits with status code 1
+ *
+ * \param[in] err A String to print
  */
 void print_error(const char* err) {
     fprintf(stderr, "An error has occurred: %s\n", err);
-    exit(1);
+    exit(1); /* TODO: Make this a function argument */
 }
 
-/*
- * Prints pcap specific error messages and dies
+/**
+ * \brief Prints pcap specific error messages and dies
+ *
+ * This function calls into the pcap library to extract an error message for a
+ * pcap_t object, print it to stderr as print_error does and exit with status
+ * code 1
+ *
+ * \param[in] p pcap_t object to print error for
  */
 void print_pcap_err(pcap_t *p) {
     print_error(pcap_geterr(p));
 }
 
+/**
+ * \brief Check for root
+ *
+ * This function checks to see if the program is bring run as root. If not, it
+ * prints an error message and exits with status code -1
+ */
 void check_for_root() {
     uid_t uid, euid;
 
@@ -186,6 +217,19 @@ void check_for_root() {
     }
 }
 
+/**
+ * \brief Sets up live capture
+ *
+ * This function sets options on the pcap_t handle that are relevant for a live
+ * capture. It's important not to call this function on an offline pcap_t
+ * handle, as it will fail.
+ *
+ * The options it sets limit the amount of the ethernet frame that is captured 
+ * and passed into userland, enable promiscuous mode, set a read timeout and
+ * activats the pcap_t object, enabling pcap_loop to use it
+ *
+ * \param[in] capture The live, unactivated pcap_t object to set options on
+ */
 void set_live_capture_options(pcap_t* capture) {
     int ret;
 
