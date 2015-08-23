@@ -24,12 +24,27 @@
 
 #include <stdlib.h>
 
-#define ACK_TABLE_SIZE 100
+static unsigned int ACK_TABLE_SIZE = 100;
 static struct session_rec **ack_table;
 static unsigned int ack_table_idx;
 
-void init_ack() {
-    int i;
+static unsigned int SYN_TABLE_SIZE = 100;
+static struct session_rec **syn_table;
+static unsigned int syn_table_idx;
+
+void init_syn(unsigned int size) {
+    unsigned int i;
+    SYN_TABLE_SIZE = size;
+    syn_table = malloc(SYN_TABLE_SIZE * sizeof(struct session_rec*));
+    for(i = 0; i< SYN_TABLE_SIZE; i++) {
+        syn_table[i] = NULL;
+    }
+    syn_table_idx = 0;
+}
+
+void init_ack(unsigned int size) {
+    unsigned int i;
+    ACK_TABLE_SIZE = size;
     ack_table = malloc(ACK_TABLE_SIZE * sizeof(struct session_rec*));
     for(i = 0; i < ACK_TABLE_SIZE; i++){
         ack_table[i] = NULL;
@@ -69,7 +84,7 @@ int calc_delta(struct timeval ts1, struct timeval ts2) {
  */
 void add_to_syn(const struct sniff_ip* ip, const struct sniff_tcp* tcp, struct timeval ts) {
     struct session_rec *sess = build_session(ip, tcp, ts);
-    int i = syn_table_idx % SYN_TABLE_SIZE;
+    unsigned int i = syn_table_idx % SYN_TABLE_SIZE;
 
     free(syn_table[i]);
     syn_table[i] = sess;
@@ -84,7 +99,7 @@ void add_to_syn(const struct sniff_ip* ip, const struct sniff_tcp* tcp, struct t
  */
 void add_to_ack(const struct sniff_ip* ip, const struct sniff_tcp* tcp, struct timeval ts) {
     struct session_rec *sess = build_session(ip, tcp, ts);
-    int i = ack_table_idx % ACK_TABLE_SIZE;
+    unsigned int i = ack_table_idx % ACK_TABLE_SIZE;
 
     free(ack_table[i]);
     ack_table[i] = sess;
@@ -103,7 +118,8 @@ void find_in_syn(const struct sniff_ip* ip, const struct sniff_tcp* tcp, struct 
      * neater and more straightforward to read */
     struct session_rec* sess2 = build_session(ip, tcp, ts);
     struct session_rec* sess1;
-    int delta, i;
+    int delta;
+    unsigned int i;
 
     for(i = 0; i < SYN_TABLE_SIZE; i++) {
         sess1 = syn_table[i];
@@ -141,7 +157,8 @@ void find_in_ack(const struct sniff_ip* ip, const struct sniff_tcp* tcp, struct 
      * neater and more straightforward to read */
     struct session_rec* sess2 = build_session(ip, tcp, ts);
     struct session_rec* sess1;
-    int delta, i;
+    int delta;
+    unsigned int i;
 
     for(i = 0; i < ACK_TABLE_SIZE; i++) {
         sess1 = ack_table[i];

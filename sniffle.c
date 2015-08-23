@@ -36,15 +36,12 @@ void process_packet(uint8_t *user, const struct pcap_pkthdr *h, const uint8_t *b
 void check_for_root(void);
 void set_live_capture_options(pcap_t* capture);
 
-struct session_rec **syn_table;
-unsigned int syn_table_idx;
-
 int main(int argc, char** argv) {
     /* Error buffer used by many pcap functions to return error messages */
     char errbuf[PCAP_ERRBUF_SIZE];
     pcap_t *capture;
     char *dev;
-    int ret, i;
+    int ret;
     struct bpf_program *filter;
 
     /* If not enough options, print usage and die */
@@ -94,13 +91,9 @@ int main(int argc, char** argv) {
     /* Sanity check, capture should be set at this point */
     if(!capture) print_error("Something is terribly wrong, no capture device or file");
 
-    init_ack();
+    init_ack(size_arg);
+    init_syn(size_arg);
 
-    syn_table = malloc(SYN_TABLE_SIZE * sizeof(struct session_rec*));
-    for(i = 0; i < SYN_TABLE_SIZE; i++){
-        syn_table[i] = NULL;
-    }
-    syn_table_idx = 0;
 
 
     /* Set up the packet filter and compile it down */

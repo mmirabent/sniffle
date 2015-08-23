@@ -1,5 +1,15 @@
-sniffle : main.c decode.h session.h session.c output.c output.h options.c options.h
-	clang -o sniffle -std=gnu90 -lpcap -g -pedantic -Weverything main.c session.c output.c options.c
+CC=clang
+CFLAGS=-std=gnu90 -g -pedantic -Weverything
+LDLIBS=-lpcap
+OBJECTS=options.o session.o output.o sniffle.o
+
+
+sniffle : $(OBJECTS)
+
+sniffle.o : sniffle.c decode.h session.h options.h
+options.o : options.c options.h
+session.o : session.c session.h output.h options.h
+output.o : output.c output.h
 
 test : sniffle
 	sudo ./test.sh

@@ -1,3 +1,4 @@
+*.o
 sniffle
 .DS_Store
 main

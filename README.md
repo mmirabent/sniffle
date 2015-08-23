@@ -1,6 +1,6 @@
 # Sniffle
 
-Passive network health monitoring
+TCP Handshake Sniffer
 
 ## TODO
 
