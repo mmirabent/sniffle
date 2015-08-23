@@ -28,6 +28,10 @@
 static struct session_rec **ack_table;
 static unsigned int ack_table_idx;
 
+#define SYN_TABLE_SIZE 100
+static struct session_rec **syn_table;
+static unsigned int syn_table_idx;
+
 void init_syn() {
     int i;
     syn_table = malloc(SYN_TABLE_SIZE * sizeof(struct session_rec*));

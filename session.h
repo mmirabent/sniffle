@@ -26,11 +26,6 @@
 
 #include "decode.h"
 
-#define SYN_TABLE_SIZE 100
-extern struct session_rec **syn_table;
-extern u_int syn_table_idx;
-
-
 struct session_rec {
     struct  in_addr ip_src;         /* source and dest address */
     struct  in_addr ip_dst;

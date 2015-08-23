@@ -36,9 +36,6 @@ void process_packet(uint8_t *user, const struct pcap_pkthdr *h, const uint8_t *b
 void check_for_root(void);
 void set_live_capture_options(pcap_t* capture);
 
-struct session_rec **syn_table;
-unsigned int syn_table_idx;
-
 int main(int argc, char** argv) {
     /* Error buffer used by many pcap functions to return error messages */
     char errbuf[PCAP_ERRBUF_SIZE];
