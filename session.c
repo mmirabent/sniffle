@@ -32,8 +32,9 @@ static unsigned int SYN_TABLE_SIZE = 100;
 static struct session_rec **syn_table;
 static unsigned int syn_table_idx;
 
-void init_syn() {
+void init_syn(unsigned int size) {
     unsigned int i;
+    SYN_TABLE_SIZE = size;
     syn_table = malloc(SYN_TABLE_SIZE * sizeof(struct session_rec*));
     for(i = 0; i< SYN_TABLE_SIZE; i++) {
         syn_table[i] = NULL;
@@ -41,8 +42,9 @@ void init_syn() {
     syn_table_idx = 0;
 }
 
-void init_ack() {
+void init_ack(unsigned int size) {
     unsigned int i;
+    ACK_TABLE_SIZE = size;
     ack_table = malloc(ACK_TABLE_SIZE * sizeof(struct session_rec*));
     for(i = 0; i < ACK_TABLE_SIZE; i++){
         ack_table[i] = NULL;

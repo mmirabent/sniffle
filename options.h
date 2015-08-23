@@ -29,7 +29,7 @@ extern char* live_capture_dev;
 extern int live_capture_flag;
 extern char* capture_file;
 extern char* csv_output_file;
-extern long int size;
+extern unsigned int size_arg;
 
 void print_usage(void);
 void process_options(int argc, char** argv);

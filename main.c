@@ -91,8 +91,8 @@ int main(int argc, char** argv) {
     /* Sanity check, capture should be set at this point */
     if(!capture) print_error("Something is terribly wrong, no capture device or file");
 
-    init_ack();
-    init_syn();
+    init_ack(size_arg);
+    init_syn(size_arg);
 
 
 

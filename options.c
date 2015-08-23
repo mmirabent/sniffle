@@ -31,14 +31,16 @@ char* live_capture_dev;
 int live_capture_flag;
 char* capture_file;
 char* csv_output_file;
-long int size;
+unsigned int size_arg;
 
 void process_options(int argc, char** argv) {
+    long int temp_size;
     int c;
     live_capture_dev = NULL;
     live_capture_flag = 0;
     capture_file = NULL;
-    size = 100; /* Default table size */
+    size_arg = 100; /* Default table size */
+
     while(1) {
         static struct option long_options[] = 
         {
@@ -74,17 +76,19 @@ void process_options(int argc, char** argv) {
                 csv_output_file = optarg;
                 break;
             case 's':
-                size = strtol(optarg, &end, 10);
+                errno = 0;
+                temp_size = strtol(optarg, &end, 10);
                 if(errno == ERANGE) { /* Too large a number */
-                    fprintf(stderr, "Size supplied is too large");
+                    fprintf(stderr, "Size supplied is too large\n");
                     exit(-1);
-                } else if(!size && end == optarg) { /* No conversion */
+                } else if(end == optarg) { /* No conversion */
                     fprintf(stderr, "The size argument must be a valid integer\n");
                     exit(-2);
-                } else if(size <= 0) {
+                } else if(temp_size <= 0) {
                     fprintf(stderr, "Size cannot be negative\n");
                     exit(-3);
                 }
+                size_arg = (unsigned int)temp_size;
                 break;
             case 'h':
                 print_usage();
