@@ -1,12 +1,12 @@
 CC=clang
 CFLAGS=-std=gnu90 -g -pedantic -Weverything
-LDFLAGS=-lpcap
-OBJECTS=options.o session.o output.o
+LDLIBS=-lpcap
+OBJECTS=options.o session.o output.o sniffle.o
 
 
 sniffle : $(OBJECTS)
-	$(CC) -o sniffle $(CFLAGS) $(LDFLAGS) main.c $(OBJECTS) 
 
+sniffle.o : sniffle.c decode.h session.h options.h
 options.o : options.c options.h
 session.o : session.c session.h output.h options.h
 output.o : output.c output.h
