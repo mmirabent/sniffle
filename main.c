@@ -44,7 +44,7 @@ int main(int argc, char** argv) {
     char errbuf[PCAP_ERRBUF_SIZE];
     pcap_t *capture;
     char *dev;
-    int ret, i;
+    int ret;
     struct bpf_program *filter;
 
     /* If not enough options, print usage and die */
@@ -95,12 +95,8 @@ int main(int argc, char** argv) {
     if(!capture) print_error("Something is terribly wrong, no capture device or file");
 
     init_ack();
+    init_syn();
 
-    syn_table = malloc(SYN_TABLE_SIZE * sizeof(struct session_rec*));
-    for(i = 0; i < SYN_TABLE_SIZE; i++){
-        syn_table[i] = NULL;
-    }
-    syn_table_idx = 0;
 
 
     /* Set up the packet filter and compile it down */
