@@ -24,24 +24,25 @@
 #ifndef __PCM_SESSION_H
 #define __PCM_SESSION_H
 
-#include "decode.h"
+#include <netinet/ip.h>
 
 struct session_rec {
     struct  in_addr ip_src;         /* source and dest address */
     struct  in_addr ip_dst;
-    tcp_seq seq;     /* Sequence number */
-    u_short sport;   /* Destination port */
-    u_short dport;   /* Source port */
+    uint16_t sport;   /* Destination port */
+    uint16_t pad1;
+    uint16_t dport;   /* Source port */
+    uint16_t pad2;
     struct  timeval ts;
 };
 
 int calc_delta(struct timeval ts1, struct timeval ts2);
-void add_to_syn(const struct sniff_ip* ip, const struct sniff_tcp* tcp, struct timeval ts);
-void add_to_ack(const struct sniff_ip* ip, const struct sniff_tcp* tcp, struct timeval ts);
-void find_in_syn(const struct sniff_ip* ip, const struct sniff_tcp* tcp, struct timeval ts);
-void find_in_ack(const struct sniff_ip* ip, const struct sniff_tcp* tcp, struct timeval ts);
+void add_to_syn(struct session_rec *sess);
+void add_to_ack(struct session_rec *sess);
+void find_in_syn(struct session_rec *sess);
+void find_in_ack(struct session_rec *sess);
 void init_ack(unsigned int size);
 void init_syn(unsigned int size);
-struct session_rec* build_session(const struct sniff_ip* ip, const struct sniff_tcp* tcp, struct timeval ts);
+struct session_rec* build_session(struct in_addr src_addr, struct in_addr dst_addr, uint16_t src_port, uint16_t dst_port, struct timeval ts);
 
 #endif

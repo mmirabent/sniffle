@@ -57,14 +57,13 @@ void init_ack(unsigned int size) {
  * and timeval structs. It allocated memory, so be sure to free the struct
  * returned, lest ye be haunted by memory leaks!
  */
-struct session_rec* build_session(const struct sniff_ip* ip, const struct sniff_tcp* tcp, struct timeval ts) {
+struct session_rec* build_session(struct in_addr src_addr, struct in_addr dst_addr, uint16_t src_port, uint16_t dst_port, struct timeval ts) { 
     struct session_rec *sess;
     sess = malloc(sizeof(struct session_rec));
-    sess->sport = tcp->th_sport;
-    sess->dport = tcp->th_dport;
-    sess->ip_src = ip->ip_src;
-    sess->ip_dst = ip->ip_dst;
-    sess->seq = tcp->th_seq;
+    sess->sport = src_port;
+    sess->dport = dst_port;
+    sess->ip_src = src_addr;
+    sess->ip_dst = dst_addr;
     sess->ts = ts;
     return sess;
 }
@@ -82,8 +81,7 @@ int calc_delta(struct timeval ts1, struct timeval ts2) {
  * operator is used to make sure that when the syn_table_idx reaches
  * SYN_TABLE_SIZE, the index wraps around to 0
  */
-void add_to_syn(const struct sniff_ip* ip, const struct sniff_tcp* tcp, struct timeval ts) {
-    struct session_rec *sess = build_session(ip, tcp, ts);
+void add_to_syn(struct session_rec *sess) {
     unsigned int i = syn_table_idx % SYN_TABLE_SIZE;
 
     free(syn_table[i]);
@@ -97,8 +95,7 @@ void add_to_syn(const struct sniff_ip* ip, const struct sniff_tcp* tcp, struct t
  * operator is used to make sure that when the ack_table_idx reaches
  * ACK_TABLE_SIZE, the index wraps around to 0
  */
-void add_to_ack(const struct sniff_ip* ip, const struct sniff_tcp* tcp, struct timeval ts) {
-    struct session_rec *sess = build_session(ip, tcp, ts);
+void add_to_ack(struct session_rec* sess) {
     unsigned int i = ack_table_idx % ACK_TABLE_SIZE;
 
     free(ack_table[i]);
@@ -112,11 +109,10 @@ void add_to_ack(const struct sniff_ip* ip, const struct sniff_tcp* tcp, struct t
  * SYN packet, it will call the report_server_rtt function and remove the 
  * matched SYN packet from the syn table.
  */
-void find_in_syn(const struct sniff_ip* ip, const struct sniff_tcp* tcp, struct timeval ts) {
+void find_in_syn(struct session_rec * sess2) {
     /* Build a session record from the supplied ip, tcp and ts structs.
      * Strictly speaking, this isn't necessary, but it makes the code below
      * neater and more straightforward to read */
-    struct session_rec* sess2 = build_session(ip, tcp, ts);
     struct session_rec* sess1;
     int delta;
     unsigned int i;
@@ -142,7 +138,7 @@ void find_in_syn(const struct sniff_ip* ip, const struct sniff_tcp* tcp, struct 
             return;
         }
     }
-    free(sess2);
+    free(sess2); /* TODO: Move this free call out of here */
 }
 
 /*
@@ -151,11 +147,10 @@ void find_in_syn(const struct sniff_ip* ip, const struct sniff_tcp* tcp, struct 
  * SYN packet, it will call the report_server_rtt function and remove the 
  * matched SYN packet from the syn table.
  */
-void find_in_ack(const struct sniff_ip* ip, const struct sniff_tcp* tcp, struct timeval ts) {
+void find_in_ack(struct session_rec *sess2) {
     /* Build a session record from the supplied ip, tcp and ts structs.
      * Strictly speaking, this isn't necessary, but it makes the code below
      * neater and more straightforward to read */
-    struct session_rec* sess2 = build_session(ip, tcp, ts);
     struct session_rec* sess1;
     int delta;
     unsigned int i;

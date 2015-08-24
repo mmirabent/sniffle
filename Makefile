@@ -14,7 +14,7 @@ output.o : output.c output.h
 test : sniffle
 	sudo ./test.sh
 
-doc : main.c decode.h session.h session.c output.h output.c options.h options.c
+doc : 
 	doxygen Doxyfile
 
 .PHONY : test doc

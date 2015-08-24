@@ -140,6 +140,7 @@ void process_packet(uint8_t *user, const struct pcap_pkthdr *h, const uint8_t *p
     const struct sniff_tcp *tcp;
     int size_ip;
     int size_tcp;
+    struct session_rec *sess;
 
     /* By casting the correct memory address to the ip and tcp structs, we can
      * use the structs to get at the important information in the packet headers */
@@ -156,12 +157,16 @@ void process_packet(uint8_t *user, const struct pcap_pkthdr *h, const uint8_t *p
 
     /* This is where the magic starts */
     if(tcp->th_flags == TH_SYN) {   /* If the packet has the SYN flag set */
-        add_to_syn(ip, tcp, h->ts); 
+        sess = build_session(ip->ip_src, ip->ip_dst, tcp->th_sport, tcp->th_dport, h->ts);
+        add_to_syn(sess);
     } else if(tcp->th_flags == ( TH_SYN | TH_ACK )){ /* If the packet has the SYN and ACK flag set */
-        find_in_syn(ip, tcp, h->ts);
-        add_to_ack(ip, tcp, h->ts);
+        sess = build_session(ip->ip_src, ip->ip_dst, tcp->th_sport, tcp->th_dport, h->ts);
+        find_in_syn(sess);
+        sess = build_session(ip->ip_src, ip->ip_dst, tcp->th_sport, tcp->th_dport, h->ts);
+        add_to_ack(sess);
     } else if(tcp->th_flags == TH_ACK) {
-        find_in_ack(ip, tcp, h->ts);
+        sess = build_session(ip->ip_src, ip->ip_dst, tcp->th_sport, tcp->th_dport, h->ts);
+        find_in_ack(sess);
     }
 }
 #pragma clang diagnostic pop
